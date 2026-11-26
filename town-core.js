@@ -83,8 +83,13 @@ function spend(cents, why){ if(T.coins<cents) return false; T.coins-=cents; T.le
 
 /* ---------- daily tasks ---------- */
 function counts(){ const g=GOALS[T.settings.goal]||GOALS.balanced; return g.counts||T.settings.custom; }
+const MAX_TASKS = 3;           // 每天最多 3 个任务，轮流安排
 function tasksToday(){ const c=counts(), done=T.tasks[today()]||{};
-  return Object.keys(GAMES).filter(k=>GAMES[k].ready && (c[k]||0)>0).map(k=>({game:k, ...GAMES[k], need:c[k], done:Math.min(done[k]||0,c[k])})); }
+  let keys=Object.keys(GAMES).filter(k=>GAMES[k].ready && (c[k]||0)>0);
+  if(keys.length>MAX_TASKS){ const focus=keys.filter(k=>c[k]>=2), rest=keys.filter(k=>c[k]<2);
+    const day=Math.floor(Date.parse(today()+'T12:00:00Z')/864e5); const rot=rest.map((k,i)=>rest[(i+day)%rest.length]);
+    const pick=new Set([...focus,...rot].slice(0,MAX_TASKS)); keys=keys.filter(k=>pick.has(k)); }
+  return keys.map(k=>({game:k, ...GAMES[k], need:c[k], done:Math.min(done[k]||0,c[k])})); }
 function allDone(){ const t=tasksToday(); return t.length>0 && t.every(x=>x.done>=x.need); }
 function taskDone(game){ const d=today(); const before=allDone(); T.tasks[d]=T.tasks[d]||{}; T.tasks[d][game]=(T.tasks[d][game]||0)+1;
   let bonus=0, stamp=false; if(!before && allDone()){ bonus=TASK_BONUS; earn(bonus,'完成今天全部任务'); }

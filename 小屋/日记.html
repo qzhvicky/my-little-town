@@ -59,6 +59,22 @@ textarea{width:100%;min-height:300px;border:none;background:transparent;resize:n
 .teal{background:#3FBFAD;color:#fff}.violet{background:#8C7AE6;color:#fff}.white{background:#fff}.gold{background:#FFC94D}
 .row{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
 .note{background:#FFF1F4;border-radius:22px;padding:22px;font:24px/1.6 var(--hand);white-space:pre-wrap;user-select:text;-webkit-user-select:text}
+#envAnim{position:fixed;inset:0;z-index:40;background:rgba(40,25,50,.35);display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .4s}
+#envAnim.in{opacity:1}
+#envAnim .ea-env{position:relative;width:min(420px,70vw);aspect-ratio:1.45;transform:scale(.3) rotate(-8deg);transition:transform .8s cubic-bezier(.3,1.4,.5,1)}
+#envAnim.in .ea-env{transform:scale(1) rotate(0)}
+#envAnim .ea-back{position:absolute;inset:0;background:#F6C9C9;border-radius:10px;box-shadow:0 14px 40px rgba(0,0,0,.3)}
+#envAnim .ea-front{position:absolute;inset:0;border-radius:10px;background:linear-gradient(to top right,#FBDADA 50%,transparent 50.5%) left/50.5% 100% no-repeat,linear-gradient(to top left,#F9D2D2 50%,transparent 50.5%) right/50.5% 100% no-repeat;z-index:3}
+#envAnim .ea-flap{position:absolute;left:0;right:0;top:0;height:62%;background:#F3B8BB;clip-path:polygon(0 0,100% 0,50% 100%);transform-origin:top;transition:transform .7s ease;z-index:4;border-radius:10px 10px 0 0}
+#envAnim.open .ea-flap{transform:rotateX(180deg);z-index:1}
+#envAnim .ea-seal{position:absolute;left:50%;top:52%;transform:translate(-50%,-50%);z-index:5;width:54px;height:54px;border-radius:50%;background:#E2546F;display:flex;align-items:center;justify-content:center;transition:opacity .3s}
+#envAnim .ea-seal img{width:30px;height:30px;filter:brightness(10)}
+#envAnim.open .ea-seal{opacity:0}
+#envAnim .ea-paper{position:absolute;left:7%;right:7%;top:8%;height:84%;background:#FFFDF6;border-radius:6px;z-index:2;transition:transform .9s cubic-bezier(.3,1.2,.5,1);overflow:hidden;padding:14px;box-shadow:0 2px 6px rgba(0,0,0,.12)}
+#envAnim .ea-txt{font:15px/1.5 var(--hand);color:#6b5a66;opacity:.6;white-space:pre-wrap}
+#envAnim.out .ea-paper{transform:translateY(-58%)}
+.note.unfold{animation:unfold .7s cubic-bezier(.3,1.2,.5,1)}
+@keyframes unfold{from{transform:scaleY(.15) translateY(-40%);opacity:.3}to{transform:none;opacity:1}}
 #env{position:absolute;font-size:3.6vw;cursor:pointer;animation:bounce 1.4s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(255,190,210,.9));z-index:12}
 @keyframes bounce{50%{transform:translateY(-14%) rotate(-6deg)}}
 .flystar{position:fixed;z-index:30;font-size:46px;pointer-events:none;transition:all 1.6s cubic-bezier(.4,0,.2,1)}
@@ -200,12 +216,17 @@ async function save(shared){ entry.shared=shared; hideCard();
   if(finished){ show(`<h1>You made a constellation!</h1><div class="sub" style="font-size:22px">你连出了一个「${prev.zh}」${prev.en} constellation！</div><div class="row"><button class="big violet" id="gn">Good night</button></div>`); TC.speakZh(`哇！你连出了一个${prev.zh}！`); }
   else { show(`<h1>Star number ${n}!</h1><div class="sub" style="font-size:20px">窗外又亮了一颗星。再写 ${STARS_PER-st.lit} 晚，就能连出「${st.cons.zh}」。</div><div class="row"><button class="big violet" id="gn">Good night</button></div>`); TC.speakZh(`窗外又亮了一颗星星。晚安！`); }
   $('#gn').onclick=goodbye; }
-function showEnvelope(note){ const r=$('#scene'); const e=document.createElement('div'); e.id='env'; e.innerHTML=TC.icon('letter'); e.style.left=PILLOW.x*100+'%'; e.style.top=PILLOW.y*100+'%'; r.appendChild(e);
-  setTimeout(()=>TC.speakZh('枕头边好像有一封信！'),2500);
-  e.onclick=()=>{ e.remove(); note.read=true; TC.save(); const back=card.innerHTML;
-    show(`<h1>A note from Mum</h1><div class="sub">${esc(note.d)}${note.about?` · 回复你 ${esc(note.about)} 的日记`:''}</div><div class="note">${esc(note.text)}</div><div class="row" style="margin-top:16px"><button class="big teal" id="ok">Thank you, Mum</button></div>`);
+function showEnvelope(note){ const r=$('#scene'); if(document.getElementById('env')) return; const e=document.createElement('div'); e.id='env'; e.innerHTML=TC.icon('letter'); e.style.left=PILLOW.x*100+'%'; e.style.top=PILLOW.y*100+'%'; r.appendChild(e);
+  setTimeout(()=>TC.speak(TC.L('枕头上有一封妈妈的信，想看的时候点一下它。','There is a letter from Mum on your pillow. Tap it when you want to read it.'),TC.lang()==='en'?'en-NZ':'zh-CN',.95),2500);
+  e.onclick=()=>{ e.remove(); note.read=true; note.readOn=TC.today(); TC.save(); openEnvelopeAnim(note); }; }
+function openEnvelopeAnim(note){ const back=card.style.display; card.style.display='none';
+  const o=document.createElement('div'); o.id='envAnim';
+  o.innerHTML=`<div class="ea-env"><div class="ea-back"></div><div class="ea-paper"><div class="ea-txt">${esc(note.text)}</div></div><div class="ea-front"></div><div class="ea-flap"></div><div class="ea-seal">${TC.icon('heart')}</div></div>`;
+  document.body.appendChild(o); TC.playSfx&&TC.playSfx('pop');
+  requestAnimationFrame(()=>{ o.classList.add('in'); setTimeout(()=>o.classList.add('open'),900); setTimeout(()=>o.classList.add('out'),1700); setTimeout(()=>{ o.remove();
+    show(`<h1>${TC.L('妈妈的信','A letter from Mum')}</h1><div class="sub">${esc(note.d)}${note.about?` · ${TC.L(`回复你 ${esc(note.about)} 的日记`,`reply to your diary on ${esc(note.about)}`)}`:''}</div><div class="note unfold">${esc(note.text)}</div><div class="row" style="margin-top:16px"><button class="big teal" id="ok">${TC.L('谢谢妈妈','Thank you, Mum')}</button></div>`);
     TC.speak(note.text, /[一-鿿]/.test(note.text)?'zh-CN':'en-NZ', .9);
-    $('#ok').onclick=()=>welcome(); }; }
+    $('#ok').onclick=()=>{ TC.stopSpeech&&TC.stopSpeech(); const nx=T.notes.find(n=>!n.read); DAY?dayWelcome():welcome(); if(nx) showEnvelope(nx); }; },2700); }); }
 function openBook(){ const list=T.diary.slice().reverse(); const done=Math.floor(T.diary.length/STARS_PER);
   show(`<h1>My Diary</h1><div class="sub">${T.diary.length} nights · ${done?TC.L(`已连出 ${CONS.slice(0,Math.min(done,CONS.length)).map(c=>c.zh).join('、')}${done>CONS.length?' ……':''}`,`Constellations: ${CONS.slice(0,Math.min(done,CONS.length)).map(c=>c.en||c.zh).join(', ')}${done>CONS.length?' …':''}`):TC.L('还没连出星座','No constellations yet')}</div>
    ${list.length?list.map(e=>`<div class="entry"><div class="h">${esc(e.d)} · ${moodHTML(e.mood)} ${MOODS[e.mood]?.[1]||''} · ${e.shared?'给妈妈看':'只给自己'}</div>${e.prompt>=0?`<div style="font-weight:800;margin-bottom:4px">${esc(PROMPTS[e.prompt][1])}</div>`:''}<div class="t">${esc(e.text)}</div></div>`).join(''):'<div class="sub">还没有日记</div>'}

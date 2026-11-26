@@ -42,6 +42,10 @@ h1{font-size:42px;margin:0;font-weight:900}
 .introcard{background:#fff;border-radius:36px;padding:26px 50px;box-shadow:0 10px 0 var(--line);display:flex;gap:40px;align-items:center}
 .introcard .ch{font-family:var(--kai);font-size:200px;line-height:1;color:var(--ink);background:repeating-linear-gradient(0deg,transparent 0 49.5%,#F6D7D0 49.5% 50.5%,transparent 50.5%),repeating-linear-gradient(90deg,transparent 0 49.5%,#F6D7D0 49.5% 50.5%,transparent 50.5%);border:4px solid #F0B6AA;border-radius:18px;padding:10px 20px}
 .introcard .em{font-size:110px}
+.introcard .wpic{width:230px;height:200px;object-fit:cover;border-radius:16px;box-shadow:0 0 0 4px #fff,0 0 0 6px #E8C99B}
+.word.py ruby{ruby-position:over;margin:0 2px}.word.py rt{font-family:system-ui,sans-serif;font-size:22px;color:#8a6d55;letter-spacing:0}.word.py ruby.hl{color:var(--red)}
+.card .b img{width:92%;height:92%;object-fit:cover;border-radius:14px}
+.card .b small.py rt{font-size:13px;font-family:system-ui,sans-serif;color:#8a6d55}
 .word{font-family:var(--kai);font-size:54px}
 .word b{color:var(--red)}
 .dots{display:flex;gap:8px;justify-content:center}.dots i{width:14px;height:14px;border-radius:50%;background:#EAD9C2}.dots i.ok{background:#3FBFAD}.dots i.cur{background:var(--red)}
@@ -197,6 +201,8 @@ body::before{background:radial-gradient(ellipse at 50% 45%,rgba(255,248,234,.0) 
 <script>window.I18N_SKIP=".reader,#readerBox,.tile,.introcard .ch,.introcard .word,.ctx,.cover .label,.mem .b,.hanzi,.wallscroll,.seal-title,.cgrid,.result-cover";</script>
 <script src="chars.js"></script>
 <script src="books.js"></script>
+<script src="pinyin.js"></script>
+<script src="wordpics.js"></script>
 <script src="../assets/animals.js"></script>
 <script src="../town-core.js"></script>
 <script>
@@ -213,6 +219,10 @@ const IMG=b=>`../assets/books/${b.img}.webp`;
 
 /* ---------- data ---------- */
 function info(c){ const w=BOOK_WORDS[c]; if(w) return {c,w:w.w,e:w.e}; return CHAR_BANK.find(b=>b.c===c) || {c,w:c,e:''}; }
+function wpic(w){ const f=(window.WORD_PICS||{})[w]; return f?`words/${f}.webp`:''; }
+function pyRuby(w,hl){ const py=((window.PINYIN||{})[w]||'').split(' '); const ch=[...w];
+  if(py.length!==ch.length) return esc(w).replace(hl,`<b>${hl}</b>`);
+  return ch.map((c,i)=>`<ruby${c===hl?' class="hl"':''}>${esc(c)}<rt>${esc(py[i])}</rt></ruby>`).join(''); }
 function st(c){ return Z.chars[c]||(Z.chars[c]={box:0,seen:0,ok:0,wrong:0,known:false}); }
 function isKnown(c){ return !!Z.chars[c]?.known; }
 function knownCount(){ return Object.values(Z.chars).filter(s=>s.known).length; }
@@ -292,13 +302,14 @@ function listenChoose(c,{label='听一听，是哪个字？',allowRetry=true,poo
     else { first=false; t.classList.add('wrong'); setTimeout(()=>t.classList.remove('wrong'),400); if(!allowRetry){ $(`.tile[data-o="${c}"]`).classList.add('right'); await sayChar(c); await sleep(800); res(false); } } }); }); }
 function intro(c,b){ return new Promise(res=>{ const x=info(c); $('#stepName').textContent='学新字';
   const w=esc(x.w).replace(c,`<b>${c}</b>`), sen=esc(sentenceOf(b,c)).split(c).join(`<b>${c}</b>`);
-  $('#stage').innerHTML=`<div class="introcard"><div class="ch">${c}</div><div class="center" style="gap:10px">${x.e?`<div class="em">${x.e}</div>`:''}<div class="word">${w}</div></div></div>
+  const pic=wpic(x.w);
+  $('#stage').innerHTML=`<div class="introcard"><div class="ch">${c}</div><div class="center" style="gap:10px">${pic?`<img class="wpic" src="${pic}" alt="">`:''}<div class="word py">${pyRuby(x.w,c)}</div></div></div>
    <div class="ctx">${sen}</div>
    <div style="display:flex;gap:14px"><button class="big white" id="again">再听一次</button><button class="big red" id="gotIt">我记住了 →</button></div>`;
   setTimeout(()=>sayChar(c),300); $('#again').onclick=()=>sayChar(c); $('#gotIt').onclick=()=>res(); }); }
 function memory(chars){ return new Promise(res=>{ $('#stepName').textContent='翻牌配对';
-  const cards=shuffle(chars.flatMap(c=>{ const x=info(c); return [{k:c,t:'c',v:c},{k:c,t:'p',v:x.e||x.w,e:!!x.e}]; }));
-  $('#stage').innerHTML=`<div style="font-size:22px;font-weight:900">把字和它的图片 / 词语配成一对</div><div class="mem">${cards.map((x,i)=>`<div class="card" data-i="${i}"><div class="in"><div class="f">${TC.icon('lantern','big')}</div><div class="b ${x.t==='p'&&x.e?'e':''}">${x.t==='p'&&!x.e?`<small>${esc(x.v)}</small>`:esc(x.v)}</div></div></div>`).join('')}</div>`;
+  const usedW=new Set(); const cards=shuffle(chars.flatMap(c=>{ const x=info(c); const dup=usedW.has(x.w); usedW.add(x.w); const pic=dup?'':wpic(x.w); return [{k:c,t:'c',v:c},{k:c,t:'p',v:x.w,pic}]; }));
+  $('#stage').innerHTML=`<div style="font-size:22px;font-weight:900">把字和它的图片 / 词语配成一对</div><div class="mem">${cards.map((x,i)=>`<div class="card" data-i="${i}"><div class="in"><div class="f">${TC.icon('lantern','big')}</div><div class="b ${x.t==='p'&&x.pic?'e':''}">${x.t==='p'?(x.pic?`<img src="${x.pic}" alt="">`:`<small class="py">${pyRuby(x.v,'')}</small>`):esc(x.v)}</div></div></div>`).join('')}</div>`;
   window.__cards=cards; let open=[], done=0, lock=false;
   $$('.card').forEach(el=>el.onclick=async e=>{ if(lock||el.classList.contains('flip')) return; const x=cards[+el.dataset.i]; el.classList.add('flip'); if(x.t==='c') sayChar(x.v); open.push([el,x]);
     if(open.length===2){ lock=true; const [[a,xa],[b,xb]]=open; open=[];
@@ -308,7 +319,7 @@ function flash(text){ return new Promise(async res=>{ const d=document.createEle
 
 /* ---------- learn → test ---------- */
 async function teach(b,chars,{doDrill=true}={}){ for(let i=0;i<chars.length;i++){ setDots(chars.length,i); await intro(chars[i],b); }
-  for(let i=0;i<chars.length;i+=6){ const g=chars.slice(i,i+6); if(g.length>=2) await memory(g); }
+  { const ng=Math.ceil(chars.length/4); let k=0; for(let gi=0;gi<ng;gi++){ const sz=Math.ceil((chars.length-k)/(ng-gi)); const g=chars.slice(k,k+sz); k+=sz; if(g.length>=2) await memory(g); } }
   if(!doDrill) return {}; // relearning missed characters: straight to one check, no extra practice quiz
   const drill=shuffle(chars.slice()); const firstOk={}; $('#stepName').textContent='练一练';
   for(let i=0;i<drill.length;i++){ setDots(drill.length,i); firstOk[drill[i]]=await listenChoose(drill[i],{label:'刚学的字，找一找！',pool:bookChars(b)}); }

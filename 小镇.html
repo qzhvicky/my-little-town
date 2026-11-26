@@ -375,11 +375,12 @@ function closePanels(){ TC.setArea('town'); $$('.panel').forEach(p=>p.classList.
 $$('[data-close]').forEach(b=>b.onclick=closePanels);
 
 /* ---------- tasks ---------- */
-function openTasks(){ const ts=TC.tasksToday(); const all=TC.allDone();
-  $('#taskBody').innerHTML = (ts.length? ts.map(t=>`<div class="task"><span class="ic">${TC.icon(t.icon)}</span><span style="flex:1">${esc(t.name)}<div class="muted" style="font-size:16px">完成 ${t.done} / ${t.need} ${t.unit}</div></span>${t.done>=t.need?'<span class="ck">✓</span>':`<button class="big teal" data-go="${t.game}" style="font-size:18px;padding:10px 22px">去完成</button>`}</div>`).join('') : '<div class="muted">今天没有任务，自由玩吧！</div>')
+function openTasks(daily){ const ts=TC.tasksToday(); const all=TC.allDone();
+  $('#taskBody').innerHTML = (daily&&ts.length?`<div style="font-size:22px;font-weight:900;margin:0 0 12px">${TC.L(`今天有 ${ts.length} 个小任务，做完全部可以得到 $2 奖励！`,`You have ${ts.length} little tasks today. Finish them all for a $2 reward!`)}</div>`:'') + (ts.length? ts.map(t=>`<div class="task"><span class="ic">${TC.icon(t.icon)}</span><span style="flex:1">${esc(t.name)}<div class="muted" style="font-size:16px">完成 ${t.done} / ${t.need} ${t.unit}</div></span>${t.done>=t.need?'<span class="ck">✓</span>':`<button class="big teal" data-go="${t.game}" style="font-size:18px;padding:10px 22px">去完成</button>`}</div>`).join('') : '<div class="muted">今天没有任务，自由玩吧！</div>')
    + `<div class="task" style="background:${all?'#FFF0EA':'#fff'}"><span class="ic">${TC.icon(all?'popper':'gift')}</span><span style="flex:1">${all?'今天的任务全部完成！':'全部完成可以得到'}<div class="muted" style="font-size:16px">${all?'奖励 $2.00 已经放进钱包':'$2.00 奖励'}<br>每拼完一组单词还能得 1 个印章，集 3 个孵出一只新朋友</div></span></div>`;
   $$('#taskBody [data-go]').forEach(b=>b.onclick=()=>{ const g=b.dataset.go; if(g==='spelling') location.href='图书馆/拼写.html'; if(g==='chinese') location.href='书院/认字.html'; if(g==='shop'){ openShop('work'); } });
-  openPanel('#pTasks'); }
+  openPanel('#pTasks');
+  if(daily){ say(TC.L(`今天有${ts.length}个小任务，做完全部可以得到两块钱奖励！`,`You have ${ts.length} little tasks today. Finish them all for a two dollar reward!`)); const cl=$('#pTasks [data-close]'); if(cl){ const once=()=>{ cl.removeEventListener('click',once); setTimeout(mailPopup,500); }; cl.addEventListener('click',once); } } }
 
 /* ---------- home / wardrobe ---------- */
 function openHome(){ $('#meImg').src=outfitSrc(T.outfit);
@@ -447,12 +448,13 @@ const NAIL_COLORS=['#F7A1B8','#E2546F','#B78CF0','#7CC4F2','#7ED3B6','#FFD25A','
 const NAIL_PATS=[['plain','纯色'],['glitter','闪粉'],['dots','波点'],['stripe','条纹'],['heart','爱心'],['star','星星'],['flower','小花']];
 const NAILS=[{"cx":98,"cy":694,"x":33,"y":625,"w":134,"h":144,"ang":-35.1},{"cx":329,"cy":207,"x":276,"y":139,"w":107,"h":135,"ang":-5.2},{"cx":569,"cy":120,"x":512,"y":45,"w":114,"h":148,"ang":1.9},{"cx":790,"cy":220,"x":734,"y":149,"w":112,"h":142,"ang":7.3},{"cx":974,"cy":433,"x":924,"y":372,"w":101,"h":122,"ang":17.7}];
 function nailSVG(d,{sel=-1,size=''}={}){
-  const defs=`<defs><pattern id="pg" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="4" fill="#fff" opacity=".9"/><circle cx="19" cy="16" r="3" fill="#FFF4B0"/><circle cx="12" cy="22" r="2" fill="#fff"/></pattern><pattern id="pd" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="16" cy="16" r="7" fill="#fff"/></pattern><pattern id="ps" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="13" height="28" fill="#fff" opacity=".85"/></pattern>
-    ${NAILS.map((n,i)=>`<mask id="hn${i}" maskUnits="userSpaceOnUse" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"><image href="assets/hand/n${i}.png" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"/></mask>`).join('')}</defs>`;
+  const U='u'+(nailSVG.n=(nailSVG.n||0)+1)+'_';
+  const defs=`<defs><pattern id="${U}pg" width="26" height="26" patternUnits="userSpaceOnUse"><circle cx="6" cy="6" r="4" fill="#fff" opacity=".9"/><circle cx="19" cy="16" r="3" fill="#FFF4B0"/><circle cx="12" cy="22" r="2" fill="#fff"/></pattern><pattern id="${U}pd" width="32" height="32" patternUnits="userSpaceOnUse"><circle cx="16" cy="16" r="7" fill="#fff"/></pattern><pattern id="${U}ps" width="28" height="28" patternUnits="userSpaceOnUse" patternTransform="rotate(35)"><rect width="13" height="28" fill="#fff" opacity=".85"/></pattern>
+    ${NAILS.map((n,i)=>`<mask id="${U}hn${i}" maskUnits="userSpaceOnUse" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"><image href="assets/hand/n${i}.png" x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"/></mask>`).join('')}</defs>`;
   const nails=NAILS.map((n,i)=>{ const v=d[i]; const fill=v?.c; const box=`x="${n.x}" y="${n.y}" width="${n.w}" height="${n.h}"`;
-    const pat=v&&v.p!=='plain'?(['glitter','dots','stripe'].includes(v.p)?`<rect ${box} fill="url(#${({glitter:'pg',dots:'pd',stripe:'ps'})[v.p]})"/>`:`<text x="${n.cx}" y="${n.cy+n.h*.16}" text-anchor="middle" font-size="${n.w*.5}" fill="#fff" transform="rotate(${n.ang} ${n.cx} ${n.cy})">${({heart:'♥',star:'★',flower:'✿'})[v.p]}</text>`):'';
+    const pat=v&&v.p!=='plain'?(['glitter','dots','stripe'].includes(v.p)?`<rect ${box} fill="url(#${U}${({glitter:'pg',dots:'pd',stripe:'ps'})[v.p]})"/>`:`<text x="${n.cx}" y="${n.cy+n.h*.16}" text-anchor="middle" font-size="${n.w*.5}" fill="#fff" transform="rotate(${n.ang} ${n.cx} ${n.cy})">${({heart:'♥',star:'★',flower:'✿'})[v.p]}</text>`):'';
     return `<g class="nail ${i===sel?'sel':''}" data-n="${i}" style="transform-origin:${n.cx}px ${n.cy}px">
-      ${fill?`<g mask="url(#hn${i})"><rect ${box} fill="${fill}"/>${pat}<ellipse cx="${n.cx-n.w*.18}" cy="${n.cy-n.h*.12}" rx="${n.w*.1}" ry="${n.h*.2}" fill="#fff" opacity=".45" transform="rotate(${n.ang} ${n.cx} ${n.cy})"/></g>`:''}
+      ${fill?`<g mask="url(#${U}hn${i})"><rect ${box} fill="${fill}"/>${pat}<ellipse cx="${n.cx-n.w*.18}" cy="${n.cy-n.h*.12}" rx="${n.w*.1}" ry="${n.h*.2}" fill="#fff" opacity=".45" transform="rotate(${n.ang} ${n.cx} ${n.cy})"/></g>`:''}
       <ellipse class="hit" cx="${n.cx}" cy="${n.cy}" rx="${n.w*.62}" ry="${n.h*.62}" fill="transparent" ${i===sel?'stroke="#E2683F" stroke-width="9" stroke-dasharray="18 10"':''} transform="rotate(${n.ang} ${n.cx} ${n.cy})"/></g>`; }).join('');
   return `<svg class="hand" viewBox="0 20 1086 1130" ${size}>${defs}<image href="assets/hand/hand.webp" width="1086" height="1448"/>${nails}</svg>`; }
 let nailDraft=null, nailSel=0, nailColor=NAIL_COLORS[0], nailPat='plain';
@@ -671,14 +673,14 @@ function unreadNotes(){ return (T.notes||[]).filter(n=>!n.read); }
 function mailBadge(){ const b=$('#mailBtn'); if(b) b.classList.toggle('has',unreadNotes().length>0); }
 function openMail(){ const items=[];
   (T.diary||[]).filter(e=>e.shared).forEach(e=>items.push({t:e.ts||0,d:e.d,me:true,text:e.text,mood:e.mood,ts:e.ts}));
-  (T.notes||[]).forEach((n,i)=>{ const base=n.about? ((T.diary||[]).find(e=>e.d===n.about&&e.shared)||{}).ts : 0; items.push({t:n.ts||(base?base+1:Date.parse(n.d+'T20:00')),d:n.d,me:false,text:n.text,isNew:!n.read,i}); });
+  (T.notes||[]).forEach((n,i)=>{ const base=n.about? ((T.diary||[]).find(e=>e.d===n.about&&e.shared)||{}).ts : 0; items.push({t:n.ts||(base?base+1:Date.parse(n.d+'T20:00')),d:n.d,me:false,text:n.read?n.text:'（一封还没拆开的信，在小屋的枕头上等你）',isNew:!n.read,sealed:!n.read,i}); });
   items.sort((a,b)=>b.t-a.t);
   $('#mailBody').innerHTML= items.length? items.map(x=>`<div class="letter ${x.me?'me':'mum'} ${x.isNew?'new':''}"><div class="from">${x.me?`我写给妈妈 · ${x.d} ${MOODS_E[x.mood]||''}`:`妈妈的回信 · ${x.d}`}</div><div class="txt">${esc(x.text)}</div></div>`).join('')
     : '<div class="muted" style="text-align:center;padding:40px;font-size:20px">信箱还是空的。<br>晚上在小屋写日记、选「给妈妈看」，妈妈就会回信哦</div>';
-  (T.notes||[]).forEach(n=>{ if(!n.read){ n.read=true; n.readOn=TC.today(); } }); TC.save(); mailBadge(); openPanel('#pMail');
-  const nn=items.find(x=>x.isNew); if(nn) TC.speak(nn.text, /[一-鿿]/.test(nn.text)?'zh-CN':'en-NZ', .9); }
-function mailPopup(){ if(!unreadNotes().length) return; $('#mailPop').classList.add('on'); TC.speakZh('妈妈给你回信啦！');
-  $('#mailOpen').onclick=()=>{ $('#mailPop').classList.remove('on'); openMail(); }; $('#mailLater').onclick=()=>{ $('#mailPop').classList.remove('on'); mailBadge(); }; }
+  mailBadge(); openPanel('#pMail');
+  if(items.some(x=>x.sealed)) say(TC.L('妈妈的新信在小屋的枕头上，去拆开看看吧！','Mum\'s new letter is on your pillow. Go and open it!')); }
+function mailPopup(){ if(!unreadNotes().length) return; $('#mailPop').classList.add('on'); say(TC.L('妈妈给你回信啦！信放在小屋的枕头上了。','Mum wrote you a letter! It is waiting on your pillow.'));
+  $('#mailOpen').onclick=()=>{ $('#mailPop').classList.remove('on'); location.href='小屋/日记.html'; }; $('#mailLater').onclick=()=>{ $('#mailPop').classList.remove('on'); mailBadge(); }; }
 
 /* ---------- parent: today's learning report ---------- */
 function spellState(){ return new Promise(res=>{ try{ const r=indexedDB.open('spellingpals'); r.onerror=()=>res(null);
@@ -785,7 +787,9 @@ function setSpellLevel(lv){ return new Promise(res=>{ try{ const r=indexedDB.ope
   await playIntro();
   await runSetup();
   if(TC.guard()) return;
-  setTimeout(mailPopup, T.welcomeGift?4000:1200);
+  const firstToday=T.taskSeen!==TC.today();
+  if(firstToday && !T.welcomeGift){ T.taskSeen=TC.today(); TC.save(); setTimeout(()=>{ openTasks(true); },900); }
+  else setTimeout(mailPopup, T.welcomeGift?4000:1200);
   if(T.welcomeGift){ T.welcomeGift=false; TC.save(); setTimeout(()=>{ alertBox('欢迎来到动物小镇！',`镇长送你 <b>$10.00</b> 见面礼！<br>点房子就能进去玩：图书馆拼单词、杂货店买衣服和赚钱、<br>我的家换衣服、宠物乐园看小动物。<br>先去广场的公告栏看看今天的任务吧！`,()=>closePanels()); TC.speakZh('欢迎来到动物小镇！镇长送你十块钱见面礼！'); },600); }
   if(location.hash==='#park') openPark(); if(location.hash==='#home') openHome();
   if(location.hash==='#shop') openShop('work');
@@ -793,6 +797,6 @@ function setSpellLevel(lv){ return new Promise(res=>{ try{ const r=indexedDB.ope
 </script>
 <div id="intro" data-zh><div class="title"><b>My Little Town</b><span>动 物 小 镇</span></div></div>
 <div id="setup" data-zh><div class="card" id="setupCard"></div></div>
-<div id="mailPop"><div class="env"><div class="big1"><img class="tcibig" src="assets/icons/letter.png" alt=""></div><h2 style="font-size:32px;margin:10px 0">妈妈给你回信啦！</h2><div style="font-size:20px;color:#8C7766">Mum wrote you a letter!</div><div style="margin-top:20px;display:flex;gap:14px;justify-content:center"><button class="big coral" id="mailOpen">打开看看</button><button class="big white" id="mailLater">等一下再看</button></div></div></div>
+<div id="mailPop"><div class="env"><div class="big1"><img class="tcibig" src="assets/icons/letter.png" alt=""></div><h2 style="font-size:32px;margin:10px 0">妈妈给你回信啦！</h2><div style="font-size:22px;color:#8C7766;margin-top:4px">信放在小屋的枕头上啦</div><div style="font-size:18px;color:#8C7766">Mum's letter is waiting on your pillow</div><div style="margin-top:20px;display:flex;gap:14px;justify-content:center"><button class="big coral" id="mailOpen">现在回小屋</button><button class="big white" id="mailLater">等一下再看</button></div></div></div>
 </body>
 </html>
