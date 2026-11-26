@@ -304,6 +304,68 @@ if('speechSynthesis' in window) speechSynthesis.getVoices();
 function icon(n,cls=''){ return `<img class="tci ${cls}" src="${ROOT}/assets/icons/${n}.png" alt="" draggable="false">`; }
 function ico(x){ return /^[a-z]+$/.test(String(x))?icon(x):String(x); }
 (()=>{ const st=document.createElement('style'); st.textContent='img.tci{height:1.2em!important;width:1.2em!important;max-width:none!important;object-fit:contain;vertical-align:-.25em;display:inline-block;pointer-events:none;background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;margin:0!important;padding:0!important;filter:none}img.tci.big{height:1em!important;width:1em!important;vertical-align:middle}'; (document.head||document.documentElement).appendChild(st); })();
-window.TownCore = { diaryOpen, icon, ico, bgm, setMusic, musicOn, musicVol, setArea, addStamp, stampsToward, hatchShow, ready, get state(){ return T; }, save, saveNow, today, fmt, earn, spend, GAMES, GOALS, tasksToday, allDone, taskDone, eggsAvailable, STAMPS_PER_EGG,
+/* ---------- full progress backup (all IndexedDB stores of this site + mlt_* localStorage) ---------- */
+async function enc(v){
+  if(v instanceof Blob){ const u=await new Promise(r=>{ const f=new FileReader(); f.onload=()=>r(f.result); f.readAsDataURL(v); }); return {__t:'blob',type:v.type,data:u}; }
+  if(v instanceof ArrayBuffer){ return {__t:'ab',data:btoa(String.fromCharCode(...new Uint8Array(v)))}; }
+  if(v instanceof Date) return {__t:'date',data:v.toISOString()};
+  if(Array.isArray(v)){ const o=[]; for(const x of v) o.push(await enc(x)); return o; }
+  if(v&&typeof v==='object'){ const o={}; for(const k of Object.keys(v)) o[k]=await enc(v[k]); return o; }
+  return v;
+}
+async function dec(v){
+  if(Array.isArray(v)){ const o=[]; for(const x of v) o.push(await dec(x)); return o; }
+  if(v&&typeof v==='object'){
+    if(v.__t==='blob') return await (await fetch(v.data)).blob();
+    if(v.__t==='ab'){ const b=atob(v.data); const a=new Uint8Array(b.length); for(let i=0;i<b.length;i++) a[i]=b.charCodeAt(i); return a.buffer; }
+    if(v.__t==='date') return new Date(v.data);
+    const o={}; for(const k of Object.keys(v)) o[k]=await dec(v[k]); return o;
+  }
+  return v;
+}
+function idbOpen(name,ver){ return new Promise((res,rej)=>{ const r=ver?indexedDB.open(name,ver):indexedDB.open(name); r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onupgradeneeded=()=>{}; }); }
+const req=q=>new Promise((res,rej)=>{ q.onsuccess=()=>res(q.result); q.onerror=()=>rej(q.error); });
+async function dbNames(){ let names=['animaltown','spellingpals']; try{ if(indexedDB.databases){ const l=await indexedDB.databases(); l.forEach(d=>{ if(d.name&&!names.includes(d.name)) names.push(d.name); }); } }catch(e){} return names; }
+async function backupExport(){
+  await saveNow();
+  const out={app:'mylittletown-backup',ver:1,at:new Date().toISOString(),child:T.childName||'',dbs:{},ls:{}};
+  for(const name of await dbNames()){
+    let d; try{ d=await idbOpen(name); }catch(e){ continue; }
+    const info={version:d.version,stores:{}};
+    for(const sn of Array.from(d.objectStoreNames)){
+      const st=d.transaction(sn).objectStore(sn);
+      const keys=await req(st.getAllKeys()); const vals=await req(st.getAll());
+      const rows=[]; for(let i=0;i<keys.length;i++) rows.push([keys[i],await enc(vals[i])]);
+      info.stores[sn]={keyPath:st.keyPath,autoIncrement:st.autoIncrement,rows};
+    }
+    d.close(); out.dbs[name]=info;
+  }
+  try{ for(let i=0;i<localStorage.length;i++){ const k=localStorage.key(i); if(/^mlt_/.test(k)) out.ls[k]=localStorage.getItem(k); } }catch(e){}
+  const b=new Blob([JSON.stringify(out)],{type:'application/json'});
+  const a=document.createElement('a'); a.href=URL.createObjectURL(b);
+  a.download=`动物小镇进度-${(T.childName||'').replace(/[^\w一-鿿]/g,'')||'backup'}-${today()}.json`;
+  document.body.appendChild(a); a.click(); setTimeout(()=>{ URL.revokeObjectURL(a.href); a.remove(); },2000);
+  return out;
+}
+async function backupImport(file){
+  const data=JSON.parse(await file.text());
+  if(!data||data.app!=='mylittletown-backup'||!data.dbs) throw new Error('bad-file');
+  clearTimeout(saveTimer);
+  if(dbp){ try{ (await dbp).close(); }catch(e){} dbp=null; }
+  for(const [name,info] of Object.entries(data.dbs)){
+    const d=await new Promise((res,rej)=>{ const r=indexedDB.open(name,info.version||1);
+      r.onupgradeneeded=()=>{ for(const [sn,si] of Object.entries(info.stores)) if(!r.result.objectStoreNames.contains(sn)) r.result.createObjectStore(sn,si.keyPath?{keyPath:si.keyPath,autoIncrement:si.autoIncrement}:{autoIncrement:!!si.autoIncrement}); };
+      r.onsuccess=()=>res(r.result); r.onerror=()=>rej(r.error); r.onblocked=()=>rej(new Error('blocked')); });
+    for(const [sn,si] of Object.entries(info.stores)){
+      if(!d.objectStoreNames.contains(sn)) continue;
+      const rows=[]; for(const [k,v] of si.rows) rows.push([k,await dec(v)]);
+      await new Promise((res,rej)=>{ const t=d.transaction(sn,'readwrite'); const st=t.objectStore(sn); st.clear(); for(const [k,v] of rows){ if(st.keyPath) st.put(v); else st.put(v,k); } t.oncomplete=()=>res(); t.onerror=()=>rej(t.error); });
+    }
+    d.close();
+  }
+  try{ for(const [k,v] of Object.entries(data.ls||{})) localStorage.setItem(k,v); }catch(e){}
+  return data;
+}
+window.TownCore = { backupExport, backupImport, diaryOpen, icon, ico, bgm, setMusic, musicOn, musicVol, setArea, addStamp, stampsToward, hatchShow, ready, get state(){ return T; }, save, saveNow, today, fmt, earn, spend, GAMES, GOALS, tasksToday, allDone, taskDone, eggsAvailable, STAMPS_PER_EGG,
   startTimer, usedSec, limitSec, remainingSec, overtime, guard, afterReward, showNight, showBanner, askPin, parentPass, lang, setLang, L, trText, speak, speakZh, speakEn, stopSpeech, voiceKey, animalStyle, ROOT };
 })();
