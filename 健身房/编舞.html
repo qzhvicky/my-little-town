@@ -1,0 +1,246 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-town-root="..">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>健身房 · 今日锻炼</title>
+<link rel="icon" href="../assets/icon.png">
+<style>
+:root{--ink:#3F2B4F;--soft:#8E7A9C;--pink:#F27BA8;--pink-d:#D2557F;--lav:#B79BF0;--mint:#6FD1B6;--mint-d:#3FA88C;--sun:#FFD25A;--font:ui-rounded,"SF Pro Rounded","PingFang SC",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;font-family:var(--font);color:var(--ink);user-select:none;-webkit-user-select:none;overflow:hidden;background:#F6E9FB url(../assets/gym_bg.jpg) center/cover no-repeat fixed}
+button{font-family:inherit;border:none;cursor:pointer;color:inherit}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding:14px 22px;overflow-y:auto}
+.screen.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:10px}.grow{flex:1}
+.chip{display:inline-flex;align-items:center;gap:8px;background:rgba(255,252,255,.95);border-radius:999px;padding:9px 18px;font-weight:900;font-size:18px;box-shadow:0 3px 0 #E2CBEF}
+.chip img{width:26px;height:26px;object-fit:contain}
+.big{font-size:23px;font-weight:900;border-radius:999px;padding:15px 34px;transition:transform .08s}
+.big:active{transform:translateY(4px)}
+.pink{background:linear-gradient(#FF9CC2,#EC6E9E);color:#fff;box-shadow:0 6px 0 #B9497A}
+.mint{background:linear-gradient(#8EE3CB,#56BFA2);color:#fff;box-shadow:0 6px 0 #3A8C76}
+.white{background:#FFFCFF;box-shadow:0 6px 0 #E2CBEF}
+.panel{background:rgba(255,252,255,.96);border-radius:30px;box-shadow:0 0 0 3px #E6CCF3,0 0 0 9px rgba(255,255,255,.6),0 18px 50px rgba(90,50,120,.25);padding:24px 30px}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+.muted{color:var(--soft)}
+.sign{display:inline-block;background:linear-gradient(#B79BF0,#8F6FD8);color:#fff;font-size:34px;font-weight:900;letter-spacing:4px;padding:8px 26px;border-radius:16px;box-shadow:0 6px 0 #6A4FB0}
+.mv{width:100%;aspect-ratio:1;background-repeat:no-repeat;border-radius:16px;background-color:#fff}
+.cards{display:grid;grid-template-columns:repeat(4,minmax(150px,200px));gap:16px;justify-content:center}
+.card{background:#fff;border-radius:22px;padding:10px 10px 12px;box-shadow:0 0 0 3px #EEDCF7,0 5px 0 #DCC4EB;position:relative}
+.card .nm{font-weight:900;font-size:18px;margin-top:6px}.card .ct{font-size:14px;font-weight:800;color:var(--soft)}
+.card .kind{position:absolute;top:8px;left:8px;border-radius:999px;padding:2px 9px;font-size:12px;font-weight:900;color:#fff}
+.k-warm{background:#FFA36B}.k-strength{background:#F27BA8}.k-stretch{background:#6FBFE8}
+.card .tip{position:absolute;top:8px;right:8px;background:#FFF3C4;border-radius:999px;padding:2px 8px;font-size:12px;font-weight:900}
+.opts{display:flex;gap:10px;flex-wrap:wrap;justify-content:center;font-weight:800}
+.opts button{background:#F4EAFB;border-radius:999px;padding:8px 16px;font-weight:900;font-size:16px}
+.opts button.on{background:var(--lav);color:#fff}
+.safe{background:#FFF6D6;border-radius:16px;padding:10px 16px;font-weight:800;font-size:16px;color:#7A5A00}
+/* workout */
+#wo .stage{display:grid;grid-template-columns:minmax(260px,46vh) 1fr;gap:34px;align-items:center;width:min(1080px,94vw);margin:0 auto}
+#woPic{position:relative;width:100%;aspect-ratio:1;border-radius:30px;background:#fff;box-shadow:0 0 0 4px #EEDCF7,0 8px 0 #DCC4EB;overflow:hidden}
+#woPic .mv{position:absolute;inset:0;border-radius:0}
+#woPic.go .mv.hold{animation:breathe 3s ease-in-out infinite}
+#woPic.go .mv.bounce{animation:hop .9s ease-in-out infinite}
+#woPic.flip .mv{transform:scaleX(-1)}
+@keyframes breathe{50%{transform:scale(1.03)}}
+@keyframes hop{50%{transform:translateY(-5%)}}
+#woPic.rest{filter:saturate(.4) opacity(.65)}
+.ring{position:relative;width:min(34vh,260px);aspect-ratio:1;margin:0 auto}
+.ring svg{width:100%;height:100%;transform:rotate(-90deg)}
+.ring .num{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:min(13vh,96px);font-weight:900;color:var(--pink-d)}
+.ring.rest .num{color:#3E9CC8}
+#woName{font-size:40px;font-weight:900}
+#woTip{font-size:21px;font-weight:800;color:var(--soft);min-height:30px}
+#woState{display:inline-block;border-radius:999px;padding:6px 18px;font-weight:900;font-size:18px;color:#fff;background:var(--pink)}
+#woState.rest{background:#56A8D6}#woState.ready{background:#FFA36B}
+.prog{display:flex;gap:8px;justify-content:center;margin-top:14px}
+.prog i{width:18px;height:18px;border-radius:50%;background:#EEDCF7}.prog i.ok{background:var(--mint)}.prog i.cur{background:var(--pink)}
+/* skills */
+.tree{display:grid;grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:14px}
+.skill{background:#fff;border-radius:20px;padding:10px;box-shadow:0 0 0 3px #EEDCF7,0 5px 0 #DCC4EB;text-align:center}
+.skill .lv{display:flex;gap:6px;justify-content:center;margin-top:4px}
+.skill .lv i{width:16px;height:16px;border-radius:50%;background:#EEDCF7}.skill .lv i.on{background:var(--sun);box-shadow:0 0 0 2px #E0B030}
+.skill.got{box-shadow:0 0 0 4px var(--sun),0 5px 0 #E0B030}
+.skill .badge{font-size:13px;font-weight:900;color:#8A6A00;background:#FFF1B8;border-radius:999px;padding:3px 10px;display:inline-block;margin-top:6px}
+.confetti{position:fixed;pointer-events:none;width:14px;height:14px;border-radius:3px;z-index:200;animation:fly 1.3s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(540deg);opacity:0}}
+</style>
+</head>
+<body>
+<section class="screen on" id="home">
+  <div class="top"><button class="chip" id="toTown"><img class="tci" src="../assets/icons/home.png" alt=""> 回小镇</button><span class="chip" id="coins"></span><span class="grow"></span></div>
+  <div class="panel center" style="width:min(940px,86vw);margin:1vh auto">
+    <div class="sign">今日锻炼</div>
+    <div style="font-size:20px;font-weight:800">今天的 4 个动作，跟着计时一起做！每个动作练得越多，本领就越大。</div>
+    <div class="cards" id="todayCards"></div>
+    <div class="opts"><span>每个动作</span><button data-sec="20">20 秒</button><button data-sec="30">30 秒</button><button data-sec="40">40 秒</button><span style="margin-left:14px">做</span><button data-r="1">1 轮</button><button data-r="2">2 轮</button></div>
+    <div style="display:flex;gap:16px;flex-wrap:wrap;justify-content:center">
+      <button class="big pink" id="goWo">开始跟练</button>
+      <button class="big white" id="reroll">换一组</button>
+      <button class="big white" id="goTree">我的本领</button>
+    </div>
+    <div class="safe">在空旷的地毯或软垫上做，旁边不要有桌角。拉伸要慢慢来，有一点点酸就好，不要硬压。</div>
+  </div>
+</section>
+
+<section class="screen" id="wo">
+  <div class="top"><button class="chip" id="woStop">停下</button><span class="grow"></span><button class="chip" id="woPause">暂停</button><span class="chip" id="woRound"></span></div>
+  <div class="stage">
+    <div id="woPic"></div>
+    <div class="center" style="gap:10px">
+      <div id="woState"></div>
+      <div id="woName"></div>
+      <div id="woTip"></div>
+      <div class="ring" id="ring"><svg viewBox="0 0 100 100"><circle cx="50" cy="50" r="44" fill="none" stroke="#F1E4F8" stroke-width="9"/><circle id="arc" cx="50" cy="50" r="44" fill="none" stroke="#F27BA8" stroke-width="9" stroke-linecap="round" stroke-dasharray="276.5" stroke-dashoffset="0"/></svg><div class="num" id="woNum"></div></div>
+      <div id="woNext" class="muted" style="font-size:18px;font-weight:800;min-height:26px"></div>
+      <div class="prog" id="prog"></div>
+    </div>
+  </div>
+</section>
+
+<section class="screen" id="done">
+  <div class="panel center" style="width:min(760px,86vw);margin:auto" id="doneBody"></div>
+</section>
+
+<section class="screen" id="tree">
+  <div class="top"><button class="chip" id="trBack">← 健身房</button><span class="grow"></span><span class="chip">我的本领</span></div>
+  <div class="panel" style="width:min(1060px,90vw);margin:0 auto">
+    <div class="muted" style="font-weight:800;margin-bottom:12px">每个动作练 3 次就学会。标着「小镇」的动作学会以后，小镇上的你也会做！</div>
+    <div class="tree" id="treeBody"></div>
+  </div>
+</section>
+
+<script src="../assets/animals.js"></script>
+<script src="../town-core.js"></script>
+<script>
+"use strict";
+const TC=window.TownCore; let T,G;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const L=(zh,en)=>TC.L(zh,en);
+const say=(zh,en)=>TC.speak(L(zh,en), TC.lang()==='en'?'en-NZ':'zh-CN', 1, {interrupt:true});
+/* sheet a = assets/moves.webp (4×4, first 12 used), b = assets/moves2.webp (4×4), c = cartwheel strip
+   kind: warm (热身/有氧) · strength (力量) · stretch (拉伸/瑜伽)  · side: do both sides (switch halfway) · hold: a still pose */
+const MOVES=[
+ {id:'star',zh:'星星跳',en:'Star jumps',s:'a',i:0,kind:'warm',tip:['手脚一起张开、合上','Arms and legs out, then in']},
+ {id:'lunge',zh:'侧弓步',en:'Side lunge',s:'a',i:3,kind:'strength',side:1,tip:['往旁边迈一大步，屁股往后坐','Big step to the side, sit back']},
+ {id:'squat',zh:'深蹲',en:'Squats',s:'a',i:4,kind:'strength',tip:['像坐小椅子一样往后坐，再站起来','Sit back like a little chair, then stand']},
+ {id:'cat',zh:'猫咪伸懒腰',en:'Cat stretch',s:'a',i:7,kind:'stretch',hold:1,tip:['背像小猫一样拱起来，再放下','Round your back like a cat, then relax']},
+ {id:'split',zh:'劈叉',en:'Splits',s:'a',i:8,kind:'stretch',side:1,hold:1,mat:1,map:'split',tip:['慢慢往下滑，到有点酸就停','Slide down slowly, stop when it feels stretchy']},
+ {id:'bridge',zh:'下桥',en:'Bridge',s:'a',i:9,kind:'stretch',hold:1,mat:1,tip:['手脚撑地，肚子往上顶','Hands and feet down, push your tummy up']},
+ {id:'tuck',zh:'抱膝跳',en:'Tuck jumps',s:'a',i:10,kind:'warm',map:'jump',tip:['跳起来，膝盖往胸口收','Jump and pull your knees up']},
+ {id:'cartwheel',zh:'侧手翻',en:'Cartwheels',s:'c',kind:'warm',mat:1,map:'cartwheel',tip:['在软垫上一个一个慢慢翻','One at a time on the mat']},
+ {id:'plank',zh:'平板支撑',en:'Plank',s:'b',i:0,kind:'strength',hold:1,tip:['身体像一块木板，肚子收紧','Body straight like a board, tummy tight']},
+ {id:'glute',zh:'臀桥',en:'Glute bridge',s:'b',i:1,kind:'strength',tip:['躺下，屁股抬起来，再放下','Lie down, lift your bottom up, then down']},
+ {id:'bear',zh:'熊爬',en:'Bear crawl',s:'b',i:2,kind:'strength',tip:['膝盖离地一点点，像小熊一样爬','Knees just off the floor, crawl like a bear']},
+ {id:'superman',zh:'超人飞',en:'Superman',s:'b',i:3,kind:'strength',hold:1,tip:['趴着，手脚一起抬起来飞','Lie on your tummy, lift arms and legs and fly']},
+ {id:'crab',zh:'螃蟹走',en:'Crab walk',s:'b',i:4,kind:'strength',tip:['肚子朝上，像螃蟹一样走','Tummy up, walk like a crab']},
+ {id:'pushup',zh:'跪姿俯卧撑',en:'Knee push-ups',s:'b',i:5,kind:'strength',tip:['膝盖着地，胸口慢慢往下','Knees down, lower your chest slowly']},
+ {id:'sideplank',zh:'侧平板',en:'Side plank',s:'b',i:6,kind:'strength',side:1,hold:1,tip:['一只手撑地，身体侧过来','One hand down, body sideways']},
+ {id:'boat',zh:'小船式',en:'Boat pose',s:'b',i:7,kind:'strength',hold:1,tip:['坐着，脚抬起来，像一只小船','Sit, lift your feet, be a little boat']},
+ {id:'tree',zh:'树式',en:'Tree pose',s:'b',i:8,kind:'stretch',side:1,hold:1,tip:['一只脚踩在另一条腿上，手合起来','Foot on your other leg, hands together']},
+ {id:'butterfly',zh:'蝴蝶式',en:'Butterfly',s:'b',i:9,kind:'stretch',hold:1,split:1,tip:['脚心对脚心，膝盖像翅膀轻轻扇','Soles together, flap your knees like wings']},
+ {id:'cobra',zh:'眼镜蛇式',en:'Cobra',s:'b',i:10,kind:'stretch',hold:1,tip:['趴着，手撑起胸口往上看','On your tummy, push your chest up']},
+ {id:'dog',zh:'下犬式',en:'Downward dog',s:'b',i:11,kind:'stretch',hold:1,split:1,tip:['屁股往上顶，脚跟往下踩','Bottom up high, heels down']},
+ {id:'child',zh:'婴儿式',en:"Child's pose",s:'b',i:12,kind:'stretch',hold:1,tip:['跪坐，往前趴下，深呼吸','Kneel, fold forward, breathe slowly']},
+ {id:'warrior',zh:'战士二式',en:'Warrior two',s:'b',i:13,kind:'stretch',side:1,hold:1,split:1,tip:['腿分开，前腿弯，手臂伸直','Legs wide, bend the front knee, arms long']},
+ {id:'frog',zh:'青蛙跳',en:'Frog jumps',s:'b',i:14,kind:'warm',tip:['蹲下，像青蛙一样往前跳','Squat down, jump forward like a frog']},
+ {id:'fold',zh:'坐姿体前屈',en:'Forward fold',s:'b',i:15,kind:'stretch',hold:1,split:1,tip:['腿伸直，手慢慢去摸脚尖','Legs straight, reach for your toes']}];
+MOVES.filter(m=>m.id==='split'||m.id==='lunge').forEach(m=>m.split=1);
+/* two-frame animation pairs (like the 小教练 follow-along): sheet, [frame A, frame B], seconds per frame */
+const PAIRS={star:['pairs1',[0,1],.55],squat:['pairs1',[2,3],1.4],lunge:['pairs1',[4,5],1.4],tuck:['pairs1',[6,7],.7],glute:['pairs1',[8,9],1.4],pushup:['pairs1',[10,11],1.5],frog:['pairs1',[12,13],.8],superman:['pairs1',[14,15],1.6],
+  bear:['pairs2',[0,1],.6],crab:['pairs2',[2,3],.7],cat:['pairs2',[4,5],2],butterfly:['pairs2',[6,7],.5]};
+const SHEET_ROWS={pairs1:4,pairs2:2};
+MOVES.forEach(m=>{ if(PAIRS[m.id]){ m.fr=PAIRS[m.id]; delete m.hold; } });
+const NEED=3;
+function mvStyle(m,f){ if(m.fr){ const [sh,ix]=m.fr, k=ix[f==null?1:f], rows=SHEET_ROWS[sh]; return `background-image:url(../assets/${sh}.webp);background-size:400% ${rows*100}%;background-position:${(k%4)/3*100}% ${rows>1?Math.floor(k/4)/(rows-1)*100:0}%`; }
+  if(m.s==='c') return 'background-image:url(../assets/poses/cart_pink.webp);background-size:500% 100%;background-position:50% 0';
+  const sheet=m.s==='a'?'moves':'moves2'; return `background-image:url(../assets/${sheet}.webp);background-size:400% 400%;background-position:${(m.i%4)/3*100}% ${Math.floor(m.i/4)/3*100}%`; }
+const KIND={warm:['热身','Warm-up'],strength:['力量','Strength'],stretch:['拉伸','Stretch']};
+function card(m){ return `<div class="card"><span class="kind k-${m.kind}">${L(...KIND[m.kind])}</span>${m.mat?`<span class="tip">${L('软垫','Mat')}</span>`:''}<div class="mv" style="${mvStyle(m)}"></div><div class="nm">${L(m.zh,m.en)}</div><div class="ct">${m.side?L(`左右各 ${Math.round(secOf(m)/2)} 秒`,`${Math.round(secOf(m)/2)} s each side`):L(`${secOf(m)} 秒`,`${secOf(m)} s`)}</div></div>`; }
+function secOf(m){ const base=G.sec||30; return m.side?60:(m.kind==='strength'&&m.hold?Math.min(base,25):base); } // both-sides moves: 30 s each side
+
+/* today's plan: one warm-up, two strength, one stretch (split-friendly most days). Same plan all day unless "换一组". */
+function rng(seed){ let h=seed>>>0; return ()=>{ h=(h*1103515245+12345)>>>0; return h/4294967296; }; }
+function todayPlan(){ const d=TC.today(); let h=0; for(const ch of d+'|'+(G.reroll?.[d]||0)) h=(h*31+ch.charCodeAt(0))>>>0; const r=rng(h);
+  const pick=(pool,n)=>{ const p=pool.slice(), out=[]; while(out.length<n&&p.length) out.push(p.splice(Math.floor(r()*p.length),1)[0]); return out; };
+  const warm=pick(MOVES.filter(m=>m.kind==='warm'),1), str=pick(MOVES.filter(m=>m.kind==='strength'),2);
+  const st=pick(MOVES.filter(m=>m.kind==='stretch'&&(r()<.7?m.split:true)),1);
+  return [...warm,...str,...st]; }
+
+/* ---------- sounds: 哒 tick, start, halfway, countdown, finish (no voice needed to follow) ---------- */
+let AC=null;
+function ac(){ try{ AC=AC||new (window.AudioContext||window.webkitAudioContext)(); if(AC.state==='suspended') AC.resume(); }catch(e){} return AC; }
+function beep(fr,dur=.08,v=.25,type='sine',delay=0){ const a=ac(); if(!a) return; const t=a.currentTime+delay; const o=a.createOscillator(), g=a.createGain(); o.type=type; o.frequency.value=fr;
+  g.gain.setValueAtTime(0,t); g.gain.linearRampToValueAtTime(v,t+.005); g.gain.exponentialRampToValueAtTime(.001,t+dur); o.connect(g).connect(a.destination); o.start(t); o.stop(t+dur+.02); }
+const SND={ tick:()=>beep(1250,.035,.10,'triangle'), go:()=>{ beep(660,.12,.3); beep(990,.18,.3,'sine',.14); }, half:()=>{ beep(880,.09,.25); beep(880,.09,.25,'sine',.16); },
+  switch:()=>{ [0,.12,.24].forEach(d=>beep(1046,.07,.25,'square',d)); }, count:()=>beep(1046,.1,.28), end:()=>{ beep(784,.1,.3); beep(988,.1,.3,'sine',.12); beep(1318,.22,.3,'sine',.24); },
+  rest:()=>{ beep(784,.14,.22); beep(523,.2,.22,'sine',.16); },
+  down:()=>beep(660,.04,.12,'triangle'), up:()=>beep(990,.04,.12,'triangle') };
+
+/* ---------- workout runner ---------- */
+let RUN=null;
+function setRing(frac,rest){ $('#arc').style.strokeDashoffset=String(276.5*(1-frac)); $('#arc').setAttribute('stroke',rest?'#56A8D6':'#F27BA8'); $('#ring').classList.toggle('rest',!!rest); }
+function phase(label,cls){ $('#woState').textContent=label; $('#woState').className=cls||''; }
+async function countdown(sec,{onSec,rest}={}){ for(let s=sec;s>0;s--){ if(RUN.stop) return false; while(RUN.paused){ await sleep(200); if(RUN.stop) return false; }
+    $('#woNum').textContent=s; setRing(s/sec,rest); onSec&&onSec(s); await sleep(1000); } setRing(0,rest); return !RUN.stop; }
+function showMove(m,flip){ $('#woPic').innerHTML=`<div class="mv ${m.fr?'':m.hold?'hold':'bounce'}" style="${mvStyle(m,m.fr?0:null)}"></div>`; $('#woPic').classList.toggle('flip',!!flip);
+  $('#woName').textContent=L(m.zh,m.en); $('#woTip').textContent=L(...m.tip); }
+async function workout(){ if(TC.guard()) return; const plan=todayPlan(), R=G.rounds||2; RUN={stop:false,paused:false}; go('wo'); bgm(true);
+  const seq=[]; for(let r=0;r<R;r++) plan.forEach(m=>seq.push({m,r}));
+  $('#prog').innerHTML=seq.map(()=>'<i></i>').join('');
+  say('准备好了吗？先站到地毯中间。','Ready? Stand in the middle of the mat.');
+  for(let k=0;k<seq.length;k++){ const {m,r}=seq[k]; $('#woRound').textContent=L(`第 ${r+1} / ${R} 轮`,`Round ${r+1} of ${R}`);
+    $$('#prog i').forEach((x,i)=>x.className=i<k?'ok':i===k?'cur':'');
+    // get ready
+    showMove(m,false); $('#woPic').classList.remove('go'); $('#woPic').classList.add('rest'); phase(L('准备','Get ready'),'ready'); $('#woNext').textContent='';
+    if(k>0||true) say(`下一个，${m.zh}。${m.tip[0]}`,`Next: ${m.en}. ${m.tip[1]}`);
+    if(!await countdown(k===0?8:6,{rest:true,onSec:s=>{ if(s<=3) SND.count(); }})) return;
+    // work
+    const sec=secOf(m); $('#woPic').classList.remove('rest'); $('#woPic').classList.add('go'); phase(L('开始','Go!')); SND.go();
+    let anim=null; if(m.fr){ let f=0; const el=$('#woPic .mv'); anim=setInterval(()=>{ if(!RUN||RUN.paused) return; f=1-f; el.setAttribute('style',mvStyle(m,f)); f?SND.up():SND.down(); }, m.fr[2]*1000); }
+    const ok=await countdown(sec,{onSec:s=>{ const el=sec-s; if(el>0&&el===Math.floor(sec/2)){ if(m.side){ SND.switch(); $('#woPic').classList.add('flip'); say('换另一边！','Switch sides!'); } else { SND.half(); say('还有一半，加油！','Halfway, keep going!'); } }
+        else if(s<=3) SND.count(); else if(!m.fr) SND.tick(); }});
+    clearInterval(anim); if(!ok) return; SND.end(); $$('#prog i')[k].className='ok';
+    // rest (not after the last move)
+    if(k<seq.length-1){ const nx=seq[k+1].m; const long=seq[k+1].r!==r; const rs=long?30:15; $('#woPic').classList.remove('go'); $('#woPic').classList.add('rest');
+      phase(L(long?'这一轮做完啦，休息一下':'休息一下','Rest'),'rest'); $('#woNext').textContent=L(`下一个：${nx.zh}`,`Next: ${nx.en}`); SND.rest(); say(long?'这一轮做完啦！喝口水休息一下。':'休息一下，深呼吸。',long?'Round done! Have a drink of water.':'Rest and breathe.');
+      if(!await countdown(rs,{rest:true,onSec:s=>{ if(s<=3) SND.count(); }})) return; } }
+  bgm(false); finish(plan); }
+function stopRun(){ if(RUN){ RUN.stop=true; RUN=null; } bgm(false); }
+$('#woStop').onclick=()=>{ stopRun(); go('home'); };
+$('#woPause').onclick=()=>{ if(!RUN) return; RUN.paused=!RUN.paused; $('#woPause').textContent=RUN.paused?L('继续','Resume'):L('暂停','Pause'); };
+
+async function finish(moves){ const learned=[]; moves.forEach(m=>{ const before=G.done[m.id]||0; G.done[m.id]=before+1; if(before<NEED&&G.done[m.id]>=NEED) learned.push(m); });
+  G.sessions=(G.sessions||0)+1; const first=G.lastDay!==TC.today(); G.lastDay=TC.today(); const cents=first?150:60; TC.earn(cents,'健身房锻炼'); await TC.saveNow();
+  const mapNew=learned.filter(m=>m.map); go('done');
+  $('#doneBody').innerHTML=`<div style="font-size:44px;font-weight:900">${L('太棒了！今天的锻炼完成啦','Amazing! Workout done!')}</div><div class="chip" style="font-size:22px">${L('赚了','You earned')} ${TC.fmt(cents)}</div>
+   ${learned.map(m=>`<div style="font-size:22px;color:#3FA88C;font-weight:900">${L(`学会了「${m.zh}」！`,`You learned "${m.en}"!`)}</div>`).join('')}
+   ${mapNew.map(m=>`<div style="font-size:22px;color:#D2557F;font-weight:900">${L(`小镇上的你也会「${m.zh}」啦！`,`In town you can now do "${m.en}"!`)}</div>`).join('')}
+   <div style="display:flex;gap:14px;justify-content:center;margin-top:12px"><button class="big white" id="toHome">${L('回健身房','Back to the gym')}</button><button class="big pink" id="toTown2">${L('回小镇看看','Go to town')}</button></div>`;
+  for(let i=0;i<30;i++){ const b=document.createElement('div'); b.className='confetti'; b.style.background=['#F27BA8','#FFD25A','#6FD1B6','#B79BF0','#6FBFE8'][i%5]; b.style.left=innerWidth/2+'px'; b.style.top=innerHeight/2+'px'; const a=Math.random()*Math.PI*2,d=120+Math.random()*260; b.style.setProperty('--dx',Math.cos(a)*d+'px'); b.style.setProperty('--dy',Math.sin(a)*d+'px'); document.body.appendChild(b); setTimeout(()=>b.remove(),1400); }
+  say(mapNew.length?`太棒了！小镇上的你学会了${mapNew.map(m=>m.zh).join('和')}！`:'太棒了！今天的锻炼完成啦！', mapNew.length?`Amazing! In town you can now do ${mapNew.map(m=>m.en).join(' and ')}!`:'Amazing! Workout done!');
+  $('#toHome').onclick=()=>TC.afterReward(()=>go('home')); $('#toTown2').onclick=()=>TC.afterReward(()=>{ location.href='../小镇.html'; }); }
+
+/* ---------- skills ---------- */
+function renderTree(){ $('#treeBody').innerHTML=MOVES.map(m=>{ const n=Math.min(G.done[m.id]||0,NEED), got=n>=NEED; return `<div class="skill ${got?'got':''}"><div class="mv" style="${mvStyle(m)}"></div><div style="font-weight:900;font-size:17px;margin-top:6px">${L(m.zh,m.en)}</div><div class="lv">${Array.from({length:NEED},(_,i)=>`<i class="${i<n?'on':''}"></i>`).join('')}</div>${m.map?`<span class="badge">${L(got?'小镇上会做了':'学会后小镇上也会做',got?'You can do it in town':'Unlocks in town')}</span>`:''}</div>`; }).join(''); }
+
+/* ---------- optional workout music (a file in assets/music, if present) ---------- */
+let BGM=null;
+function bgm(on){ TC.bgm(on?'gym':'games'); }
+function musicLabel(){}
+
+/* ---------- nav ---------- */
+function go(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); if(id==='home') renderHome(); if(id==='tree') renderTree(); }
+function renderHome(){ $('#coins').innerHTML=TC.icon('coin')+' '+TC.fmt(T.coins); $('#todayCards').innerHTML=todayPlan().map(card).join('');
+  $$('[data-sec]').forEach(b=>{ b.classList.toggle('on',+b.dataset.sec===(G.sec||30)); b.onclick=()=>{ G.sec=+b.dataset.sec; TC.save(); renderHome(); }; });
+  $$('[data-r]').forEach(b=>{ b.classList.toggle('on',+b.dataset.r===(G.rounds||2)); b.onclick=()=>{ G.rounds=+b.dataset.r; TC.save(); renderHome(); }; }); musicLabel(); }
+$('#toTown').onclick=()=>{ location.href='../小镇.html'; };
+$('#goWo').onclick=workout;
+$('#reroll').onclick=()=>{ const d=TC.today(); G.reroll=G.reroll||{}; G.reroll={[d]:(G.reroll[d]||0)+1}; TC.save(); renderHome(); };
+$('#goTree').onclick=()=>go('tree'); $('#trBack').onclick=()=>go('home');
+(async()=>{ T=await TC.ready; T.gym=T.gym||{done:{}}; G=T.gym; G.done=G.done||{}; TC.startTimer(); go('home'); if(TC.guard()) return;
+  setTimeout(()=>say(G.sessions?'欢迎回来！今天的锻炼准备好啦！':'欢迎来到健身房！看看今天的 4 个动作，跟着计时一起做吧！', G.sessions?"Welcome back! Today's workout is ready!":"Welcome to the gym! Here are today's four moves. Let's do them together!"),600); })();
+</script>
+</body>
+</html>

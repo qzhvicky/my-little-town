@@ -1,0 +1,39 @@
+动物小镇 My Little Town · 使用说明
+=====================================
+
+【怎么打开】
+1. 把压缩包解压到电脑上任意位置（不要在压缩包里直接打开）。
+2. 用 Chrome 或 Edge 浏览器打开文件夹里的「小镇.html」
+   （右键 → 打开方式 → Chrome）。Safari 可能打不开某些功能。
+3. 第一次打开会问语言、孩子的名字和年龄，按年龄自动设置难度。
+4. 建议把这个页面加到浏览器书签，以后点书签就能进。
+
+只能在电脑（Mac / Windows）上玩，iPad 和手机不行。不用联网，没有广告。
+
+【家长中心】
+- 点右上角的小锁。第一次点会让你设一个 4 位数密码，之后用它进入。
+- 里面可以：看每天学了什么、调整每个游戏的难度、设置每天的游戏时间、
+  给孩子的日记写回信。
+
+【玩法】
+- 图书馆：拼英文单词，拼完一轮得印章，集印章孵小动物。
+- 书院：中文小故事 18 本，不认识的字点一下就会读。
+- 面包店：乘除法、认钟表。
+- 杂货店：买东西、当店员找零钱。
+- 健身房：每天 4 个小动作跟练。
+- 我的家：换衣服、写日记，日记写完当天的游戏就结束啦。
+
+【注意】
+- 进度存在这台电脑的浏览器里。清除浏览器数据、换浏览器或换电脑，进度会从头开始。
+- 请保持文件夹的结构和文件名不变，否则会找不到图片和声音。
+
+-------------------------------------
+How to play (English)
+1. Unzip the whole folder first.
+2. Open "小镇.html" in Chrome or Edge (right-click → Open with → Chrome).
+3. The first time, it asks for language, the child's name and age.
+4. Parent centre: tap the lock at the top right. The first tap lets you set a
+   4-digit PIN. There you can see progress, set difficulty and daily time,
+   and reply to the diary.
+Works offline on a computer (Mac or Windows) only. Progress is saved in that
+browser on that computer; clearing browser data resets it.

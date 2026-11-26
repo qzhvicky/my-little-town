@@ -1,0 +1,562 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-town-root="..">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>面包店 · 开店做点心</title>
+<link rel="icon" href="../assets/icon.png">
+<style>
+:root{--ink:#4A2E2A;--soft:#9A7B72;--pink:#F28BA8;--pink-d:#D9607F;--cream:#FFF8EE;--line:#F1D9C8;--mint:#7FD1B9;--mint-d:#4FAF93;--gold:#F6C15B;
+ --font:ui-rounded,"SF Pro Rounded","PingFang SC",system-ui,sans-serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;font-family:var(--font);color:var(--ink);user-select:none;-webkit-user-select:none;overflow:hidden;
+ background:#FBE3E3 url(../assets/bakery_bg.jpg) center/cover no-repeat fixed}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(ellipse at 50% 45%,rgba(255,248,240,0) 35%,rgba(120,60,50,.18) 100%)}
+button{font-family:inherit;border:none;cursor:pointer;color:inherit}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding:14px 22px;overflow-y:auto}
+.screen.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.grow{flex:1}
+.chip{display:inline-flex;align-items:center;gap:6px;background:rgba(255,250,244,.96);border-radius:999px;padding:9px 18px;font-weight:900;font-size:18px;box-shadow:0 3px 0 #E8C3B5}
+.big{font-size:23px;font-weight:900;border-radius:999px;padding:15px 34px;transition:transform .08s}
+.big:active{transform:translateY(4px)}
+.pink{background:linear-gradient(#F79DB5,#E9718F);color:#fff;box-shadow:0 6px 0 #B94D6A}
+.mint{background:linear-gradient(#8EDDC5,#5DBB9F);color:#fff;box-shadow:0 6px 0 #3E8C75}
+.white{background:#FFFBF5;box-shadow:0 6px 0 #E3C2B3}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:16px}
+h1{font-size:40px;margin:0;font-weight:900}
+.muted{color:var(--soft)}
+.panel{background:linear-gradient(#FFFDF9,#FFF5EC);border-radius:28px;box-shadow:0 0 0 3px #F0C3B3,0 0 0 9px rgba(255,250,244,.75),0 18px 50px rgba(110,50,40,.25);position:relative}
+.panel::before{content:'';position:absolute;left:24px;right:24px;top:-16px;height:22px;border-radius:12px 12px 4px 4px;
+ background:repeating-linear-gradient(90deg,#F28BA8 0 34px,#FFF5EE 34px 68px);box-shadow:0 3px 4px rgba(0,0,0,.12)}
+.sign{display:inline-flex;align-items:center;gap:10px;background:#7A4A3A;color:#FFE9C9;font-size:36px;font-weight:900;letter-spacing:8px;padding:8px 22px 8px 30px;border-radius:14px;box-shadow:inset 0 0 0 4px #FFE9C9,inset 0 0 0 6px #7A4A3A,0 6px 0 #4E2D22}
+/* home */
+#homePanel{width:min(760px,64vw);margin:4vh auto 0;padding:34px 30px 30px}
+.case{display:grid;grid-template-columns:repeat(9,1fr);gap:8px;background:linear-gradient(#FFF,#FCEFE7);border-radius:18px;padding:12px;box-shadow:inset 0 0 0 3px #F2D2C4}
+.case div{aspect-ratio:1;border-radius:12px;background:#FFF;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:32px;box-shadow:0 3px 0 #F0D6CA;position:relative}
+.case div small{font-size:12px;font-weight:900;color:var(--soft)}
+.case div.lock{filter:grayscale(1);opacity:.35}
+.case div.new::after{content:'NEW';position:absolute;top:-8px;right:-6px;background:var(--pink);color:#fff;font-size:10px;font-weight:900;border-radius:8px;padding:2px 5px}
+.modes{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}
+.mode{background:#FFF;border-radius:18px;padding:12px 16px;min-width:150px;box-shadow:0 4px 0 #F0D6CA;font-weight:900;font-size:17px}
+.mode small{display:block;font-weight:700;color:var(--soft);font-size:13px;margin-top:2px}
+.mode.soon{opacity:.5}
+/* play */
+#stageWrap{width:min(1000px,76vw);margin:0 auto;padding:26px 26px 26px}
+.order{display:flex;align-items:center;gap:16px;background:#FFF;border-radius:22px;padding:12px 18px;box-shadow:0 4px 0 #F0D6CA;max-width:820px}
+.order .cust{width:84px;height:84px;border-radius:50%;background:#FFF;box-shadow:0 0 0 4px #FCE3EA;position:relative;overflow:hidden;flex:none}
+.order .cust i{position:absolute;inset:0;background-repeat:no-repeat}
+.order .say{font-size:25px;font-weight:900;text-align:left;line-height:1.35}
+.order .say b{color:var(--pink-d);font-size:30px}
+.speak{width:52px;height:52px;border-radius:50%;background:#FFF0F4;font-size:24px;flex:none}
+/* tray */
+.tray{display:inline-grid;gap:6px;padding:14px;border-radius:14px;background:linear-gradient(#C9CDD3,#AEB3BA);box-shadow:inset 0 0 0 4px #9AA0A8,0 6px 0 #7D838B}
+.tray .slot{width:var(--s,46px);height:var(--s,46px);border-radius:50%;background:rgba(255,255,255,.28);display:flex;align-items:center;justify-content:center;font-size:calc(var(--s,46px)*.74);line-height:1}
+.tray .slot.on{animation:pop .3s cubic-bezier(.3,1.6,.5,1)}
+@keyframes pop{from{transform:scale(.2)}}
+.rowlab{display:flex;flex-direction:column;gap:6px;padding:14px 0;justify-content:flex-start}
+.rowlab span{height:var(--s,46px);display:flex;align-items:center;font-weight:900;color:var(--pink-d);font-size:22px;min-width:44px}
+/* boxes */
+.pile{display:flex;flex-wrap:wrap;gap:4px;max-width:560px;justify-content:center;min-height:52px;font-size:34px}
+.boxes{display:flex;gap:16px;flex-wrap:wrap;justify-content:center}
+.box{width:130px;min-height:120px;border-radius:12px;background:linear-gradient(#FFE1EA,#FFC8D8);box-shadow:inset 0 0 0 4px #F5A3BA,0 5px 0 #D9849C;padding:8px;display:flex;flex-wrap:wrap;gap:2px;align-content:flex-start;justify-content:center;font-size:26px;cursor:pointer;position:relative}
+.box::before{content:'';position:absolute;left:50%;top:-10px;width:40px;height:14px;transform:translateX(-50%);border-radius:8px 8px 0 0;background:#F5A3BA}
+.box .n{position:absolute;bottom:-28px;left:0;right:0;font-weight:900;color:var(--pink-d);font-size:18px}
+/* number pad */
+.ans{display:flex;align-items:center;gap:14px;font-size:30px;font-weight:900}
+.ans .q{font-size:36px}
+.ans .box2{min-width:110px;height:68px;border-radius:16px;background:#FFF;box-shadow:inset 0 0 0 3px #F0C3B3;display:flex;align-items:center;justify-content:center;font-size:42px;color:var(--pink-d)}
+.pad{display:grid;grid-template-columns:repeat(6,64px);gap:10px}
+.pad button{height:60px;border-radius:16px;background:#FFF;font-size:28px;font-weight:900;box-shadow:0 4px 0 #EBCFC2}
+.pad button:active{transform:translateY(3px);box-shadow:0 1px 0 #EBCFC2}
+.pad .ok{background:var(--mint);color:#fff;box-shadow:0 4px 0 var(--mint-d)}
+.shake{animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.dots{display:flex;gap:8px}.dots i{width:14px;height:14px;border-radius:50%;background:#F2DCD2}.dots i.ok{background:var(--mint)}.dots i.cur{background:var(--pink)}.dots .chal{margin-left:10px;background:linear-gradient(90deg,#FFD66B,#FF9FB6);color:#7A3B12;font-weight:900;border-radius:999px;padding:3px 12px;font-size:15px;animation:popin .5s}
+.burst{position:fixed;pointer-events:none;font-size:30px;z-index:200;animation:fly 1.2s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(360deg);opacity:0}}
+.hint{font-size:18px;font-weight:800;color:var(--soft)}
+
+.split{display:grid;grid-template-columns:1.35fr 1fr;gap:22px;width:100%;align-items:start;margin-top:14px}
+.split .left{background:rgba(255,255,255,.6);border-radius:20px;padding:14px;box-shadow:inset 0 0 0 3px #F6DCD0;display:flex;flex-direction:column;align-items:center;gap:12px;min-height:320px;justify-content:center}
+.split .right{display:flex;flex-direction:column;align-items:center;gap:12px}
+.eq.eqs{font-size:22px;letter-spacing:0;color:var(--soft);max-width:320px;text-align:center}
+.eq{font-size:44px;font-weight:900;letter-spacing:3px;color:#5A3A30}
+.bin{display:flex;align-items:center;gap:12px}
+.src{width:76px;height:76px;border-radius:50%;background:radial-gradient(#FFF,#FDE6EC);box-shadow:0 0 0 4px #F7BACB,0 5px 0 #E59AB0;font-size:46px;display:flex;align-items:center;justify-content:center;cursor:grab;touch-action:none;animation:wob 2.4s ease-in-out infinite}
+@keyframes wob{50%{transform:rotate(-8deg) scale(1.05)}}
+.binlab{font-size:15px;font-weight:800;color:var(--soft);text-align:left}
+.tray .slot{cursor:pointer}.tray .slot.hover{background:rgba(255,255,255,.75);box-shadow:0 0 0 3px #F28BA8}
+.counter{display:flex;align-items:center;gap:12px;font-size:19px;font-weight:900}
+.counter b{color:var(--pink-d);font-size:26px}
+.mini{background:#FFF;border-radius:999px;padding:8px 16px;font-size:16px;font-weight:900;box-shadow:0 3px 0 #EBCFC2}
+.flyer{position:fixed;z-index:300;pointer-events:none;transform:translate(-50%,-50%);font-size:34px;line-height:1}
+.flyer.drag{font-size:46px;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25))}
+.pile .it{cursor:grab;touch-action:none;display:inline-block;transition:transform .15s}.pile .it:hover{transform:scale(1.2)}
+.pile .it.gone{visibility:hidden}
+.tt{display:inline-block;width:1.1em;height:1.1em;vertical-align:-.2em;background:url(../assets/treats.webp) 0 0/400% 300% no-repeat}
+.box{min-height:110px;width:118px;flex-direction:column}.box .in{display:flex;flex-wrap:wrap;gap:1px;justify-content:center;width:100%}
+.box .n{position:static;margin-top:auto}.box.hover{transform:scale(1.06);box-shadow:inset 0 0 0 4px #E9718F,0 5px 0 #D9849C}
+.pad{grid-template-columns:repeat(3,70px)}
+/* bakery home scene */
+#home{padding:0;background:#F3D6D8}
+#home.on{display:flex;align-items:center;justify-content:center}
+#scene{position:relative;width:min(100vw,calc(100vh*16/9));aspect-ratio:16/9;margin:auto;overflow:hidden;background:#F8DDE0 url(../assets/bakery_bg.jpg) center/100% 100% no-repeat;border-radius:6px;box-shadow:0 10px 40px rgba(0,0,0,.18)}
+#scene .hud{position:absolute;left:1.2%;right:1.2%;top:2%;display:flex;gap:10px;align-items:center;z-index:4}
+.st{position:absolute;cursor:pointer;border-radius:18px;transition:background .2s}
+.st:hover{background:rgba(255,255,255,.18);box-shadow:0 0 0 4px rgba(255,255,255,.6)}
+.st .lab{position:absolute;left:50%;transform:translate(-50%,-50%);font-weight:900;color:#5A3A1E;white-space:nowrap;font-size:calc(min(100vw,100vh*1.777)*.019);letter-spacing:.1em;text-shadow:0 1px 0 rgba(255,255,255,.6);pointer-events:none}
+.st.soon{cursor:help}
+.st .tag{position:absolute;left:50%;bottom:4%;transform:translateX(-50%);background:rgba(255,251,245,.95);border-radius:999px;padding:6px 14px;font-weight:900;font-size:calc(min(100vw,100vh*1.777)*.0105);box-shadow:0 3px 0 #E3C2B3;white-space:nowrap}
+.st.soon .tag{opacity:.75}
+#caseBar{position:absolute;left:1.5%;bottom:3%;display:flex;gap:6px;background:rgba(255,251,245,.92);border-radius:18px;padding:8px 12px;box-shadow:0 0 0 3px #F0C3B3,0 6px 18px rgba(90,40,20,.2);z-index:4}
+#caseBar div{width:calc(min(100vw,100vh*1.777)*.034);aspect-ratio:1;border-radius:10px;background:#FFF;display:flex;flex-direction:column;align-items:center;justify-content:center;font-size:calc(min(100vw,100vh*1.777)*.019);box-shadow:0 2px 0 #F0D6CA;position:relative}
+#caseBar div small{font-size:10px;font-weight:900;color:var(--soft)}
+#caseBar div.lock{filter:grayscale(1);opacity:.35}
+#caseBar .cl{font-weight:900;font-size:14px;align-self:center;margin-right:4px;width:auto;background:none;box-shadow:none;aspect-ratio:auto}
+.bubble{position:absolute;transform:translate(-50%,-110%);background:#FFFBF5;border-radius:16px;padding:10px 16px;font-weight:800;font-size:17px;box-shadow:0 0 0 3px #F0C3B3,0 6px 16px rgba(0,0,0,.15);z-index:6;white-space:nowrap;animation:fade .25s}
+
+.digital{font-family:"SF Mono",ui-monospace,monospace;font-weight:900;font-size:44px;color:#5A3A30;background:#2F2A2A;color:#9FF2C8;border-radius:12px;padding:4px 16px;letter-spacing:2px}
+.clock{width:min(300px,28vw);height:min(300px,28vw);touch-action:none;cursor:grab;filter:drop-shadow(0 6px 8px rgba(90,40,20,.2))}
+.tbtns{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.topts{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.topt{background:#FFF;border-radius:18px;padding:12px 16px;box-shadow:0 4px 0 #EBCFC2;display:flex;flex-direction:column;align-items:center;gap:6px}
+.topt .digital{font-size:30px}.topt small{font-size:16px;font-weight:900;color:var(--soft)}
+.topt.right,.fopt.right,.cakebtn.right{box-shadow:0 0 0 4px var(--mint),0 4px 0 var(--mint-d)}
+.topt.wrong,.fopt.wrong,.cakebtn.wrong{animation:shake .4s;opacity:.5}
+.cake .sl{stroke:#FFF;stroke-width:3.5;stroke-linejoin:round;cursor:pointer;transition:transform .25s,filter .2s}
+.cake .sl.sel{stroke:#F06A92;stroke-width:5;filter:drop-shadow(0 4px 4px rgba(0,0,0,.25))}.cake .sl:hover{filter:brightness(1.08)}.cake .sl.taken{opacity:.25}
+.cakes2{display:flex;gap:20px;flex-wrap:wrap;justify-content:center}
+.cakebtn{background:#FFF;border-radius:20px;padding:10px;box-shadow:0 4px 0 #EBCFC2;display:flex;flex-direction:column;align-items:center;gap:6px}
+.frac{display:inline-flex;flex-direction:column;align-items:center;vertical-align:middle;line-height:1;font-weight:900;margin:0 4px}
+.frac span:first-child{border-bottom:3px solid currentColor;padding:0 4px 2px}.frac span:last-child{padding-top:2px}
+.fopts{display:grid;grid-template-columns:repeat(2,96px);gap:12px}
+.fopt{background:#FFF;border-radius:18px;height:96px;font-size:34px;box-shadow:0 4px 0 #EBCFC2;color:#5A3A30}
+.order .say .frac{font-size:26px;color:var(--pink-d)}
+/* parent */
+#parent{background:#FBF8F4}
+.pc{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 3px 0 #EEE;user-select:text;-webkit-user-select:text}
+.pc h3{margin:0 0 10px}
+.grid10{display:grid;grid-template-columns:40px repeat(10,40px);gap:3px;font-size:13px;font-weight:800}
+.grid10 div{height:32px;display:flex;align-items:center;justify-content:center;border-radius:6px;background:#F2ECE4;color:#999}
+.grid10 .h{background:none;color:#4A2E2A}
+.grid10 .m{background:#7FD1B9;color:#fff}.grid10 .l{background:#FFE29A;color:#7a5a00}.grid10 .w{background:#F7B3B3;color:#8a2a2a}
+.btn{padding:10px 16px;border-radius:12px;background:var(--ink);color:#fff;font-weight:700;font-size:15px}
+.btn.ghost{background:#F1EAE2;color:var(--ink)}
+/* baker */
+#baker{position:fixed;left:50%;transform:translateX(-50%);bottom:0;height:min(34vh,330px);z-index:5;filter:drop-shadow(0 8px 10px rgba(60,30,10,.3));cursor:pointer}
+#bakerSay{position:fixed;left:calc(50% + min(13vh,125px));bottom:calc(min(34vh,330px) - 40px);z-index:6;background:#FFFBF5;border-radius:20px;padding:12px 18px;font-size:19px;font-weight:800;max-width:min(300px,24vw);box-shadow:0 0 0 3px #F0C3B3,0 8px 20px rgba(90,40,20,.2);display:none}
+#bakerSay.on{display:block;animation:fade .3s}
+@media (max-width:1000px){#baker{display:none!important}}
+</style>
+</head>
+<body>
+<section class="screen" id="home">
+  <div id="scene">
+    <div class="hud"><button class="chip" id="toTown"><img class="tci" src="../assets/icons/home.png" alt=""> 回小镇</button><span class="chip" id="coins"></span><span class="chip" id="taskLine" style="font-size:15px"></span><span class="grow"></span><button class="chip" id="toParent"><img class="tci" src="../assets/icons/lock.png" alt=""></button></div>
+    <div id="stations"></div>
+    <div id="caseBar"></div>
+  </div>
+</section>
+<section class="screen" id="play">
+  <div class="top"><button class="chip" id="quit">← 店里</button><span class="grow"></span><div class="dots" id="dots"></div><span class="grow"></span><span class="chip" id="stepName"></span></div>
+  <div class="center" style="flex:1"><div class="panel center" id="stageWrap"><div class="center" id="stage" style="width:100%"></div></div></div>
+</section>
+<section class="screen" id="parent">
+  <div class="top"><h1 style="font-size:28px">面包店 · 家长</h1><span class="grow"></span><button class="btn ghost" id="pBack">返回</button></div>
+  <div id="pBody"></div>
+</section>
+<img id="baker" src="../assets/baker.webp" alt="" onerror="this.remove()"><div id="bakerSay"></div>
+<script src="../assets/animals.js"></script>
+<script src="../town-core.js"></script>
+<script>
+"use strict";
+const TC=window.TownCore; let T, B;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+const addDays=(d,n)=>{ const [y,m,dd]=d.split('-').map(Number); return TC.today(new Date(y,m-1,dd+n)); };
+const INTERVAL={1:1,2:2,3:4,4:8,5:16}, MASTER=5, FAST_MS=6000, ORDERS=6;
+// table unlock order and the treat each table unlocks
+const TABLE_ORDER=[2,5,10,3,4,6,7,8,9];
+const tt=i=>`<i class="tt" style="background-position:${(i%4)*100/3}% ${Math.floor(i/4)*50}%"></i>`;
+const TREATS={2:[tt(0),'甜甜圈'],5:[tt(1),'杯子蛋糕'],10:[tt(2),'牛角包'],3:[tt(3),'曲奇'],4:[tt(4),'水果派'],6:[tt(5),'奶油蛋糕'],7:[tt(6),'华夫饼'],8:[tt(7),'椒盐卷'],9:[tt(8),'生日蛋糕']};
+const NUM=['零','一','两','三','四','五','六','七','八','九','十'];
+
+/* ---------- facts & mastery ---------- */
+// a fact is "a×b" meaning a rows of b (b is the table being practised)
+function fk(a,b){ return a+'x'+b; }
+function fst(k){ return B.facts[k]||(B.facts[k]={box:0,seen:0,ok:0,wrong:0,ms:[],due:null}); }
+function mastered(k){ return (B.facts[k]?.box||0)>=MASTER-1; }
+function tableFacts(t){ return Array.from({length:10},(_,i)=>fk(i+1,t)); }
+function tableMastery(t){ const f=tableFacts(t); return f.filter(mastered).length/f.length; }
+function unlockedTables(){ return B.tables; }
+function maybeUnlock(){ const msgs=[]; const cur=B.tables; const all=cur.filter(t=>tableMastery(t)<0.8).length<=1;
+  cur.forEach(t=>{ if(tableMastery(t)>=0.8 && !B.treats.includes(t)){ B.treats.push(t); B.newTreat=t; msgs.push(`学会了 ${t} 的乘法表，点心柜里多了「${TREATS[t][1]}」！`); } });
+  if(all){ const next=TABLE_ORDER.find(t=>!cur.includes(t)); if(next){ cur.push(next); msgs.push(`新订单来了：${next} 的乘法！`); } }
+  return msgs; }
+function record(k,ok,ms){ const s=fst(k), t=TC.today(); s.seen++; s.last=t; s.ms=(s.ms||[]).concat(ms).slice(-5);
+  if(ok){ s.ok++; const quick=ms<FAST_MS; s.box=Math.min(s.box+(quick?1:0.5),MASTER); s.box=Math.round(s.box*2)/2; s.due=addDays(t,INTERVAL[Math.max(1,Math.floor(s.box))]||30); }
+  else { s.wrong++; s.box=Math.max(0,Math.floor(s.box)-2); s.due=t; } }
+const revK=k=>k.split('x').reverse().join('x');
+function chooseFact(used){ const t=TC.today(); const pool=B.tables.flatMap(tableFacts).filter(k=>!used.includes(k)&&!used.includes(revK(k)));
+  const due=pool.filter(k=>B.facts[k]&&B.facts[k].due&&B.facts[k].due<=t&&!mastered(k));
+  const fresh=pool.filter(k=>!B.facts[k]);
+  const newest=B.tables[B.tables.length-1]; const freshNew=fresh.filter(k=>k.endsWith('x'+newest));
+  const r=Math.random();
+  if(due.length && r<0.45) return pick(due);
+  if(freshNew.length && r<0.8) return pick(freshNew);
+  if(fresh.length && r<0.85) return pick(fresh);
+  const weak=pool.filter(k=>!mastered(k)); if(weak.length && r<0.95) return pick(weak);
+  return pick(pool); }
+// scaffolding: brand-new facts get "build the tray", known facts get "look & count", mastered facts are quick orders
+function scaffold(k){ const s=B.facts[k]; if(!s||s.box<1.5) return 'build'; if(s.box<3) return 'look'; return 'quick'; }
+
+/* ---------- UI helpers ---------- */
+function setDots(n,i,chal){ $('#dots').innerHTML=Array.from({length:n},(_,k)=>`<i class="${k<i?'ok':k===i?'cur':''}"></i>`).join('')+(chal?`<span class="chal">${L('挑战单','Challenge!')}</span>`:''); }
+// a challenge order: harder than usual, offered after 3 first-try correct in a row (once per round)
+function challengeFact(used){ const nt=TABLE_ORDER.find(t=>!B.tables.includes(t)); let pool;
+  if(nt) pool=Array.from({length:8},(_,i)=>fk(i+2,nt)); else pool=B.tables.flatMap(tableFacts).filter(k=>{ const [a,b]=k.split('x').map(Number); return a*b>=36; });
+  pool=pool.filter(k=>!used.includes(k)&&!used.includes(revK(k))); return pool.length?pick(pool):null; }
+let SEEN=new Set();
+function burst(x,y,em=['star','sparkle','cupcake'],n=10){ for(let i=0;i<n;i++){ const b=document.createElement('div'); b.className='burst'; b.innerHTML=TC.ico(em[i%em.length]); b.style.left=x+'px'; b.style.top=y+'px'; const a=Math.random()*Math.PI*2,d=80+Math.random()*130; b.style.setProperty('--dx',Math.cos(a)*d+'px'); b.style.setProperty('--dy',Math.sin(a)*d-60+'px'); document.body.appendChild(b); setTimeout(()=>b.remove(),1300);} }
+const say=t=>TC.speakZh(t);
+let sayT; function baker(text,speakIt=false){ const b=$('#bakerSay'); if(!b||!$('#home').classList.contains('on')){ if(speakIt) say(text); return; } b.textContent=text; b.classList.add('on'); clearTimeout(sayT); sayT=setTimeout(()=>b.classList.remove('on'),5000); if(speakIt) say(text); }
+function customer(){ const own=(T.animals||[]); const i= own.length? pick(own) : Math.floor(Math.random()*Math.min(8,(window.ANIMALS||[]).length)); const A=(window.ANIMALS||[])[i]; return {i,zh:A?A.zh:'小客人'}; }
+function orderBox(c,html,speech){ return `<div class="order"><div class="cust"><i style="${TC.animalStyle(c.i)}"></i></div><div class="say">${html}</div><button class="speak" id="sp"><img class="tci" src="../assets/icons/speaker.png" alt=""></button></div>`; }
+function numPad(){ return new Promise(res=>{ let v=''; const box=$('#ansBox'); const upd=()=>box.textContent=v||' ';
+  $('#pad').innerHTML=[1,2,3,4,5,6,7,8,9,'⌫',0,'✓'].map(x=>`<button data-k="${x}" class="${x==='✓'?'ok':''}">${x}</button>`).join('');
+  // pad buttons never keep keyboard focus: otherwise pressing Enter also "clicks" the last-tapped digit and adds it again
+  const done=x=>{ document.removeEventListener('keydown',key); res(x); };
+  $$('#pad button').forEach(b=>{ b.tabIndex=-1; b.onmousedown=e=>e.preventDefault(); b.onclick=()=>{ b.blur(); const k=b.dataset.k; if(k==='⌫') v=v.slice(0,-1); else if(k==='✓'){ if(v) done(+v); return; } else if(v.length<3) v+=k; upd(); }; });
+  const key=e=>{ if(!$('#pad')) return document.removeEventListener('keydown',key); if(/^[0-9]$/.test(e.key)&&v.length<3){ e.preventDefault(); v+=e.key; upd(); } else if(e.key==='Backspace'){ e.preventDefault(); v=v.slice(0,-1); upd(); } else if(e.key==='Enter'){ e.preventDefault(); if(v) done(+v); } };
+  document.addEventListener('keydown',key); upd(); }); }
+async function askAnswer(label,correct){ window.__ans=correct;
+  const t0=Date.now(); let first=true;
+  for(let tries=0;;tries++){
+    $('#ansArea').innerHTML=`<div class="ans"><span class="q">${label}</span><div class="box2" id="ansBox"></div></div><div class="pad" id="pad"></div>`;
+    const v=await numPad(); const ms=Date.now()-t0;
+    if(v===correct){ burst(innerWidth/2,innerHeight/2,['cupcake','star','sparkle','cupcake']); say(['对啦！','做对了！','太棒了！'][tries?0:Math.floor(Math.random()*3)]); await sleep(700); return {firstOk:first, ms}; }
+    first=false; $('#ansBox').classList.add('shake'); say('再数一数哦'); await sleep(500);
+    if(tries>=1) $('#hintArea').innerHTML=`<div class="hint">提示：${hintFor(correct)}</div>`;
+    if(tries>=2){ $('#hintArea').innerHTML=`<div class="hint">答案是 <b style="color:var(--pink-d);font-size:26px">${correct}</b>，我们记住它！</div>`; say(`答案是${correct}`); await sleep(2200); return {firstOk:false, ms}; }
+  } }
+let hintFor=()=>'';
+
+
+/* ---------- English helpers ---------- */
+const L=(zh,en)=>TC.L(zh,en);
+const EN_N=['zero','one','two','three','four','five','six','seven','eight','nine','ten','eleven','twelve'];
+const TREAT_EN={'甜甜圈':['donut','donuts'],'杯子蛋糕':['cupcake','cupcakes'],'牛角包':['croissant','croissants'],'曲奇':['cookie','cookies'],'水果派':['fruit pie','fruit pies'],'奶油蛋糕':['cream cake','cream cakes'],'华夫饼':['waffle','waffles'],'椒盐卷':['pretzel','pretzels'],'生日蛋糕':['birthday cake','birthday cakes'],'点心':['treat','treats'],'面包':['bread','loaves of bread']};
+const tEn=(zh,n=2)=>{ const x=TREAT_EN[zh]||[zh,zh]; return n===1?x[0]:x[1]; };
+function enT(m){ m=((m%720)+720)%720; const h=Math.floor(m/60)||12, mm=m%60, nh=(h%12)+1; const W=n=>({5:'five',10:'ten',15:'quarter',20:'twenty',25:'twenty-five',30:'half'})[n];
+  if(mm===0) return `${EN_N[h]||h} o'clock`; if(mm<=30&&W(mm)) return `${W(mm)} past ${EN_N[h]||h}`; if(mm>30&&W(60-mm)) return `${W(60-mm)} to ${EN_N[nh]||nh}`; return `${h}:${String(mm).padStart(2,'0')}`; }
+const FR_EN={2:['half','halves'],3:['third','thirds'],4:['quarter','quarters'],6:['sixth','sixths'],8:['eighth','eighths']};
+function enF(n,d){ if(d===2&&n===1) return 'one half'; const f=FR_EN[d]||[d+'th',d+'ths']; return `${EN_N[n]||n} ${n===1?f[0]:f[1]}`; }
+
+/* ---------- shared: split work area (left = hands-on, right = number pad) ---------- */
+function splitLayout(c,askHtml,speech,eq){ $('#stage').innerHTML=orderBox(c,askHtml)+`<div class="split"><div class="left" id="work"></div><div class="right"><div class="eq ${/^[0-9 ×÷=?]+$/.test(eq)?'':'eqs'}">${eq}</div><div id="hintArea"></div><div id="ansArea" class="center" style="gap:10px"></div></div></div>`;
+  $('#sp').onclick=()=>say(speech); say(speech); }
+function fly(fromEl,toEl,emoji,ms=420){ return new Promise(res=>{ const a=fromEl.getBoundingClientRect(), b=toEl.getBoundingClientRect(); const d=document.createElement('div'); d.className='flyer'; d.innerHTML=emoji;
+  d.style.left=(a.left+a.width/2)+'px'; d.style.top=(a.top+a.height/2)+'px'; d.style.fontSize=Math.max(20,Math.min(40,b.height*.7))+'px'; document.body.appendChild(d);
+  requestAnimationFrame(()=>{ d.style.transition=`left ${ms}ms cubic-bezier(.4,.1,.3,1), top ${ms}ms cubic-bezier(.4,.1,.3,1.4)`; d.style.left=(b.left+b.width/2)+'px'; d.style.top=(b.top+b.height/2)+'px'; });
+  setTimeout(()=>{ d.remove(); res(); },ms+30); }); }
+// pointer drag from a source element; onDrop(targetEl) returns true if accepted
+function makeDraggable(el,emoji,targets,onDrop){ el.onpointerdown=e=>{ e.preventDefault(); const g=document.createElement('div'); g.className='flyer drag'; g.innerHTML=emoji; document.body.appendChild(g);
+  const mv=ev=>{ g.style.left=ev.clientX+'px'; g.style.top=ev.clientY+'px'; $$(targets).forEach(t=>{ const r=t.getBoundingClientRect(); t.classList.toggle('hover',ev.clientX>r.left&&ev.clientX<r.right&&ev.clientY>r.top&&ev.clientY<r.bottom); }); };
+  mv(e); let moved=false; const mv2=ev=>{ moved=true; mv(ev); };
+  const up=ev=>{ removeEventListener('pointermove',mv2); removeEventListener('pointerup',up); g.remove(); $$(targets).forEach(t=>t.classList.remove('hover'));
+    const hit=$$(targets).find(t=>{ const r=t.getBoundingClientRect(); return ev.clientX>r.left&&ev.clientX<r.right&&ev.clientY>r.top&&ev.clientY<r.bottom; });
+    if(hit) onDrop(hit); else if(!moved) onDrop(null); };
+  addEventListener('pointermove',mv2); addEventListener('pointerup',up); }; }
+// right-hand answer: number pad that is always available; onCorrect animation runs before success
+async function answerPad(label,correct,{onBeforeOk,hint}){ window.__ans=correct; const t0=Date.now(); let wrongs=0;
+  for(;;){ $('#ansArea').innerHTML=`<div class="ans"><span class="q">${label}</span><div class="box2" id="ansBox"></div></div><div class="pad" id="pad"></div>`;
+    const v=await numPad(); const ms=Date.now()-t0;
+    if(v===correct){ $('#pad').style.pointerEvents='none'; if(onBeforeOk) await onBeforeOk(); burst(innerWidth*.7,innerHeight/2,['cupcake','star','sparkle','cupcake']); say(['对啦！','做对了！','太棒了！'][Math.floor(Math.random()*3)]); await sleep(900); return {firstOk:wrongs===0, ms}; }
+    wrongs++; $('#ansBox').classList.add('shake'); say('再想一想哦'); await sleep(500);
+    $('#hintArea').innerHTML=`<div class="hint">${wrongs>=2?`答案是 <b style="color:var(--pink-d);font-size:26px">${correct}</b>，左边一起数一数！`:hint}</div>`;
+    if(wrongs>=2){ say(`答案是${correct}`); if(onBeforeOk) await onBeforeOk(); $('#ansArea').innerHTML=`<button class="big mint" id="gotIt">${L('我看懂了 →','Got it →')}</button>`; await new Promise(r=>$('#gotIt').onclick=r); return {firstOk:false, ms}; } } }
+
+/* ---------- order 1: tray (multiplication) ---------- */
+async function trayOrder(k,c){ const [rows,per]=k.split('x').map(Number); const tr=TREATS[per]||[tt(1),'点心']; const total=rows*per;
+  $('#stepName').textContent='烤盘订单';
+  const speech=L(`我要${NUM[rows]||rows}排${tr[1]}，每排${NUM[per]||per}个`,`I'd like ${rows} rows of ${tEn(tr[1])}, with ${per} in each row, please!`);
+  splitLayout(c,L(`我要 <b>${rows}</b> 排${tr[1]}，每排 <b>${per}</b> 个！`,`I'd like <b>${rows}</b> rows of ${tEn(tr[1])}, <b>${per}</b> in each row!`),speech,`${rows} × ${per} = ?`);
+  const S=Math.max(24,Math.min(46,Math.floor(300/rows)-6,Math.floor(430/per)-6));
+  $('#work').innerHTML=`<div class="bin"><div class="src" id="src" title="拖一个到烤盘">${tr[0]}</div><div class="binlab">拖到烤盘上<br>或点空格</div></div>
+    <div style="display:flex;gap:6px;align-items:flex-start"><div class="rowlab" style="--s:${S}px">${Array.from({length:rows},(_,i)=>`<span data-r="${i}"></span>`).join('')}</div>
+    <div class="tray" style="--s:${S}px;grid-template-columns:repeat(${per},${S}px)">${Array.from({length:total},(_,i)=>`<div class="slot" data-i="${i}"></div>`).join('')}</div></div>
+    <div class="counter">已放 <b id="cnt">0</b> 个 <button class="mini" id="addRow">放一整排</button></div>`;
+  let placed=0; const slots=$$('.tray .slot');
+  const refresh=()=>{ $('#cnt').textContent=placed; $$('.rowlab span').forEach((sp,r)=>{ const full=slots.slice(r*per,r*per+per).every(x=>x.classList.contains('on')); sp.textContent=full?(r+1)*per:''; }); };
+  const fill=(slot,speak=true)=>{ if(!slot||slot.classList.contains('on')) slot=slots.find(x=>!x.classList.contains('on')); if(!slot) return false; slot.innerHTML=tr[0]; slot.classList.add('on'); placed++; refresh(); const r=Math.floor(+slot.dataset.i/per); if(speak){ const full=slots.slice(r*per,r*per+per).every(x=>x.classList.contains('on')); if(full) say(String((r+1)*per)); } return true; };
+  makeDraggable($('#src'),tr[0],'.tray .slot',t=>fill(t));
+  slots.forEach(x=>x.onclick=()=>fill(x));
+  $('#addRow').onclick=()=>{ const first=slots.find(x=>!x.classList.contains('on')); if(!first) return; const r=Math.floor(+first.dataset.i/per); slots.slice(r*per,r*per+per).forEach(x=>{ if(!x.classList.contains('on')) fill(x,false); }); say(String((r+1)*per)); };
+  const fillRest=async()=>{ const src=$('#src'); for(const x of slots){ if(x.classList.contains('on')) continue; fly(src,x,tr[0],320); await sleep(total>40?25:60); x.innerHTML=tr[0]; x.classList.add('on'); placed++; refresh(); } await sleep(380); };
+  const r=await answerPad('一共',total,{onBeforeOk:fillRest,hint:`${per} 个一数：${Array.from({length:rows},(_,i)=>(i+1)*per).join('、')}`});
+  return {k, ok:r.firstOk, ms:r.ms, mode: placed===0?'quick':'build'}; }
+
+/* ---------- order 2: boxes (division) ---------- */
+async function boxOrder(k,c){ const [groups,per]=k.split('x').map(Number); const total=groups*per; const tr=TREATS[per]||TREATS[groups]||[tt(3),'曲奇'];
+  $('#stepName').textContent='装盒订单';
+  const speech=L(`这里有${total}个${tr[1]}，请平均装进${NUM[groups]||groups}个盒子`,`Here are ${total} ${tEn(tr[1])}. Please share them equally into ${groups} boxes!`);
+  splitLayout(c,L(`这里有 <b>${total}</b> 个${tr[1]}，请平均装进 <b>${groups}</b> 个盒子！`,`Here are <b>${total}</b> ${tEn(tr[1])}. Share them equally into <b>${groups}</b> boxes!`),speech,`${total} ÷ ${groups} = ?`);
+  const fs=total>40?20:total>20?26:32;
+  $('#work').innerHTML=`<div class="pile" id="pile" style="font-size:${fs}px">${Array.from({length:total},(_,i)=>`<span class="it" data-i="${i}">${tr[0]}</span>`).join('')}</div>
+    <div class="boxes">${Array.from({length:groups},(_,i)=>`<div class="box" data-b="${i}" style="font-size:${per>6?16:22}px"><div class="in"></div><div class="n">0</div></div>`).join('')}</div>
+    <div class="counter"><span class="muted">拖进盒子，或点盒子放一个</span> <button class="mini" id="round">每盒各放一个</button></div>`;
+  const inBox=Array(groups).fill(0); const boxes=$$('.box');
+  const items=()=>$$('#pile .it:not(.gone)');
+  const put=(bi,item,anim=false)=>{ item=item||items()[0]; if(!item) return Promise.resolve(false); item.classList.add('gone'); const box=boxes[bi];
+    const go2=()=>{ inBox[bi]++; box.querySelector('.in').insertAdjacentHTML('beforeend',`<span>${tr[0]}</span>`); box.querySelector('.n').textContent=inBox[bi]; };
+    if(anim) return fly(item,box.querySelector('.in'),tr[0],380).then(()=>{ go2(); return true; }); go2(); return Promise.resolve(true); };
+  $$('#pile .it').forEach(it=>makeDraggable(it,tr[0],'.box',t=>{ if(t) put(+t.dataset.b,it); }));
+  boxes.forEach(b=>b.onclick=()=>put(+b.dataset.b));
+  $('#round').onclick=()=>{ for(let i=0;i<groups;i++) put(i); };
+  const settle=async()=>{ // move everything so each box has exactly `per`
+    for(let i=0;i<groups;i++) while(inBox[i]>per){ inBox[i]--; const sp=boxes[i].querySelector('.in span:last-child'); sp&&sp.remove(); const g=$$('#pile .it.gone')[0]; g&&g.classList.remove('gone'); boxes[i].querySelector('.n').textContent=inBox[i]; }
+    const target=inBox.slice(); const ps=[]; let i=0; while(items().length){ while(target[i%groups]>=per) i++; const bi=i%groups; target[bi]++; ps.push(put(bi,null,true)); i++; await sleep(total>30?45:110); } await Promise.all(ps); await sleep(300); };
+  const r=await answerPad('每盒',per,{onBeforeOk:settle,hint:`${groups} 个盒子，每盒先放 1 个，一轮一轮放，看能放几轮`});
+  return {k:'d'+k, ok:r.firstOk, ms:r.ms, mode: inBox.some(n=>n>0)?'build':'quick'}; }
+
+/* =====================================================================
+   烤箱计时（看时间）
+   Levels: 1 整点 → 2 半点 → 3 一刻/三刻 → 4 五分钟 → 5 烤多久（经过时间）
+   Each order is one of: set the clock (drag hands) / read the clock (choose)
+   ===================================================================== */
+const TIME_LV=[null,{name:'整点',step:60},{name:'半点',step:30},{name:'一刻钟',step:15},{name:'五分钟',step:5},{name:'烤多久',step:5}];
+const fmtT=m=>{ m=((m%720)+720)%720; const h=Math.floor(m/60)||12, mm=m%60; return `${h}:${String(mm).padStart(2,'0')}`; };
+function cnN(n){ const d='零一二三四五六七八九'; if(n<10) return d[n]; if(n<20) return '十'+(n%10?d[n%10]:''); return d[Math.floor(n/10)]+'十'+(n%10?d[n%10]:''); }
+function zhT(m){ m=((m%720)+720)%720; const h=Math.floor(m/60)||12, mm=m%60; const HH=(h===2?'两':cnN(h))+'点';
+  if(mm===0) return HH+'整'; if(mm===30) return HH+'半'; if(mm===15) return HH+'一刻'; if(mm===45) return HH+'三刻'; return HH+(mm<10?'零':'')+cnN(mm)+'分'; }
+function clockSVG(id){ return `<svg id="${id}" class="clock" viewBox="-110 -110 220 220">
+  <circle r="104" fill="#FFF8EE" stroke="#C98A5B" stroke-width="8"/>
+  ${Array.from({length:60},(_,i)=>{ const a=i*6*Math.PI/180, r1=i%5?92:86; return `<line x1="${Math.sin(a)*r1}" y1="${-Math.cos(a)*r1}" x2="${Math.sin(a)*97}" y2="${-Math.cos(a)*97}" stroke="#B9886A" stroke-width="${i%5?1.5:3.5}"/>`; }).join('')}
+  ${Array.from({length:12},(_,i)=>{ const n=i+1, a=n*30*Math.PI/180; return `<text x="${Math.sin(a)*72}" y="${-Math.cos(a)*72+8}" text-anchor="middle" font-size="22" font-weight="900" fill="#5A3A30">${n}</text>`; }).join('')}
+  <line class="hh" x1="0" y1="10" x2="0" y2="-48" stroke="#5A3A30" stroke-width="9" stroke-linecap="round"/>
+  <line class="mh" x1="0" y1="14" x2="0" y2="-80" stroke="#E9718F" stroke-width="6" stroke-linecap="round"/>
+  <circle class="mknob" cx="0" cy="-80" r="11" fill="#E9718F" opacity=".9"/>
+  <circle r="7" fill="#5A3A30"/></svg>`; }
+function setClock(svg,total){ const m=((total%720)+720)%720; svg.querySelector('.hh').setAttribute('transform',`rotate(${m/720*360})`); svg.querySelector('.mh').setAttribute('transform',`rotate(${(m%60)*6})`);
+  const a=(m%60)*6*Math.PI/180; const k=svg.querySelector('.mknob'); k.setAttribute('cx',Math.sin(a)*80); k.setAttribute('cy',-Math.cos(a)*80); }
+// interactive geared clock: drag minute hand; hour hand follows
+function dragClock(svg,start,step,onChange){ let total=start; setClock(svg,total);
+  const angAt=e=>{ const r=svg.getBoundingClientRect(); const x=e.clientX-(r.left+r.width/2), y=e.clientY-(r.top+r.height/2); return (Math.atan2(x,-y)*180/Math.PI+360)%360; };
+  svg.onpointerdown=e=>{ e.preventDefault(); svg.setPointerCapture(e.pointerId); let lastMin=total%60;
+    const mv=ev=>{ let m=Math.round(angAt(ev)/6/Math.min(step,5))*Math.min(step,5)%60; let d=m-lastMin; if(d>30) d-=60; if(d<-30) d+=60; if(!d) return; lastMin=m; total+=d; setClock(svg,total); onChange&&onChange(total); };
+    svg.onpointermove=mv; svg.onpointerup=()=>{ svg.onpointermove=null; if(step>=15){ total=Math.round(total/step)*step; setClock(svg,total); onChange&&onChange(total); } }; mv(e); };
+  return { get:()=>total, set:v=>{ total=v; setClock(svg,total); onChange&&onChange(total); } }; }
+function randTime(lv){ const step=TIME_LV[Math.min(lv,4)].step; const h=1+Math.floor(Math.random()*12); const m= step===60?0: step===30?pick([0,30]): step===15?pick([0,15,30,45]): Math.floor(Math.random()*12)*5; return h*60%720+m; }
+function shadeMinutes(svg,T){ const mm=((T%60)+60)%60; if(!svg||mm===0) return; const to=mm>30; const a0=to?mm*6:0, a1=to?360:mm*6; const P=a=>[Math.sin(a*Math.PI/180)*90,-Math.cos(a*Math.PI/180)*90];
+  const [x0,y0]=P(a0),[x1,y1]=P(a1); const g=document.createElementNS('http://www.w3.org/2000/svg','path'); g.setAttribute('d',`M0,0L${x0},${y0}A90,90 0 ${a1-a0>180?1:0} 1 ${x1},${y1}Z`);
+  g.setAttribute('fill',to?'#8FD3F0':'#FFD27A'); g.setAttribute('opacity','.55'); g.classList.add('shade'); svg.querySelector('circle').after(g); }
+function timeWhy(T){ T=((T%720)+720)%720; const h=Math.floor(T/60)||12, mm=T%60, nh=(h%12)+1;
+  if(mm===0) return L(`长针指着 12，短针指着 ${h}，就是 ${h} 点整。`,`The long hand points to 12 and the short hand to ${h}: ${enT(T)}.`);
+  if(mm<=30) return L(`长针从 12 往前走了 ${mm} 分钟（黄色部分），是 ${h} 点过 ${mm} 分，写作 ${fmtT(T)}。`,`<b>past</b> = after the hour. The long hand has gone <b>${mm} minutes past</b> 12 (yellow part), so it's ${enT(T)} = <b>${fmtT(T)}</b>.`);
+  return L(`长针再走 ${60-mm} 分钟（蓝色部分）就到 12 了，也就是还差 ${60-mm} 分钟就到 ${nh} 点，写作 ${fmtT(T)}。`,`<b>to</b> = before the next hour. The long hand needs <b>${60-mm} more minutes</b> to reach 12 (blue part). So it's ${60-mm} minutes <b>to ${nh}</b> = <b>${fmtT(T)}</b>.`); }
+function explainTime(T){ return new Promise(res=>{ shadeMinutes($('#ck'),T);
+  $('#hintArea').innerHTML=`<div class="hint" style="font-size:20px;line-height:1.6">${timeWhy(T)}</div>`;
+  $('#ansArea').innerHTML=`<button class="big mint" id="gotIt">${L('我看懂了 →','Got it →')}</button>`;
+  say(timeWhy(T).replace(/<[^>]+>/g,'')); $('#gotIt').onclick=()=>res(); }); }
+async function ovenOrder(c,LV){ const lv=LV||B.time.lv; let kind,T0,bake;
+  for(let g=0;g<60;g++){ kind= lv>=5 && Math.random()<0.6 ? 'elapsed' : pick(['set','read']); T0=randTime(lv); bake=pick([10,15,20,25,30,40,45,60]);
+    const sig= kind==='elapsed'? 'e'+Math.floor(T0/15)*15+'+'+bake : 't'+(T0%720); if(!SEEN.has(sig)){ SEEN.add(sig); break; } }
+  const tr=pick([[tt(9),'面包'],[tt(1),'杯子蛋糕'],[tt(4),'水果派'],[tt(3),'曲奇']]);
+  if(kind==='set'){ const speech=L(`我想要${zhT(T0)}拿${tr[1]}，请把钟拨到${zhT(T0)}`,`I'll pick up my ${tEn(tr[1])} at ${enT(T0)}. Please set the clock to ${enT(T0)}.`); $('#stepName').textContent='拨钟';
+    splitLayout(c,L(`我想要 <b>${zhT(T0)}</b> 来拿${tr[1]}${tr[0]}，请把钟拨好！`,`I'll pick up my ${tEn(tr[1])} ${tr[0]} at <b>${enT(T0)}</b>. Please set the clock!`),speech,`<span class="digital" id="dig">12:00</span>`);
+    $('#work').innerHTML=clockSVG('ck')+`<div class="hint">拖动<span style="color:var(--pink-d)">粉色长针</span>转一转，短针会跟着走</div>`;
+    const ctl=dragClock($('#ck'),0,TIME_LV[Math.min(lv,4)].step,t=>{ $('#dig').textContent=fmtT(t); });
+    const stp=TIME_LV[Math.min(lv,4)].step%60; $('#ansArea').innerHTML=`<div class="tbtns"><button class="mini" data-d="-60">−1 小时</button><button class="mini" data-d="60">+1 小时</button>${stp?`<button class="mini" data-d="-${stp}">−${stp} 分</button><button class="mini" data-d="${stp}">+${stp} 分</button>`:''}</div><button class="big mint" id="setOk">✓ 拨好了</button>`; if(0)$('#x').innerHTML=`<div><button data-d="-${TIME_LV[Math.min(lv,4)].step%60||60}">−${TIME_LV[Math.min(lv,4)].step%60||60} 分</button><button class="mini" data-d="${TIME_LV[Math.min(lv,4)].step%60||60}">+${TIME_LV[Math.min(lv,4)].step%60||60} 分</button></div><button class="big mint" id="setOk">✓ 拨好了</button>`;
+    $$('.tbtns button').forEach(b=>b.onclick=()=>ctl.set(ctl.get()+ +b.dataset.d));
+    window.__ans=T0; const t0=Date.now(); let wrong=0;
+    for(;;){ await new Promise(r=>$('#setOk').onclick=r); const got=((ctl.get()%720)+720)%720;
+      if(got===T0%720){ burst(innerWidth*.35,innerHeight/2); say('拨对啦！'); await sleep(900); return {k:'t'+lv,ok:wrong===0,ms:Date.now()-t0}; }
+      wrong++; say('还不对哦，再看看'); $('#hintArea').innerHTML=`<div class="hint">${wrong>=2?L('我帮你拨好啦，看看长针和短针在哪里','I set it for you. Look where the long and short hands are.'):L(`长针指着分钟，短针指着几点。${T0%60===0?'整点的时候长针指向 12':T0%60===30?'半点的时候长针指向 6':''}`,`The long hand shows the minutes, the short hand shows the hour. ${T0%60===0?"At o'clock the long hand points to 12.":T0%60===30?'At half past the long hand points to 6.':''}`)}</div>`;
+      if(wrong>=2){ ctl.set(T0); await explainTime(T0); return {k:'t'+lv,ok:false,ms:Date.now()-t0}; } } }
+  if(kind==='read'){ const speech=L(`烤箱上的钟现在是几点？`,`What time is it on the oven clock?`); $('#stepName').textContent='认钟';
+    const opts=shuffle([T0,...shuffle([T0+60,T0-60,T0+(lv>=2?30:120),T0+(lv>=3?15:180),(T0%60)*12%720+Math.floor(T0/60)*5].map(x=>((x%720)+720)%720).filter((x,i,a)=>x!==T0%720&&a.indexOf(x)===i)).slice(0,3)]);
+    splitLayout(c,L(`我的${tr[1]}${tr[0]}在烤箱里，<b>现在是几点</b>呀？`,`My ${tEn(tr[1])} ${tr[0]} are in the oven. <b>What time is it</b> now?`),speech,L('看钟，选一选','Look at the clock and choose'));
+    $('#work').innerHTML=clockSVG('ck'); setClock($('#ck'),T0);
+    $('#ansArea').innerHTML=`<div class="topts">${opts.map(o=>`<button class="topt" data-t="${o}"><span class="digital">${fmtT(o)}</span><small>${L(zhT(o),enT(o))}</small></button>`).join('')}</div>`;
+    window.__ans=T0; const t0=Date.now(); let wrong=0;
+    return await new Promise(res=>$$('.topt').forEach(b=>b.onclick=async()=>{ if(+b.dataset.t===T0%720){ b.classList.add('right'); burst(innerWidth*.7,innerHeight/2); say(L(zhT(T0),enT(T0))); await sleep(1100); res({k:'t'+lv,ok:wrong===0,ms:Date.now()-t0}); } else { wrong++; b.classList.add('wrong'); if(wrong>=2){ $$('.topt').forEach(x=>x.disabled=true); $$('.topt').find(x=>+x.dataset.t===T0%720).classList.add('right'); await explainTime(T0); res({k:'t'+lv,ok:false,ms:Date.now()-t0}); } else say('再看看短针和长针'); } })); }
+  // elapsed: now + bake minutes
+  const now=Math.floor(T0/15)*15; const end=now+bake; $('#stepName').textContent='烤多久';
+  const speech=L(`现在是${zhT(now)}，${tr[1]}要烤${bake}分钟，几点能烤好？`,`It's ${enT(now)} now. The ${tEn(tr[1])} need ${bake} minutes in the oven. What time will they be ready?`);
+  splitLayout(c,L(`现在是 <b>${zhT(now)}</b>，${tr[1]}${tr[0]}要烤 <b>${bake} 分钟</b>。几点能烤好？`,`It's <b>${enT(now)}</b>. The ${tEn(tr[1])} ${tr[0]} need <b>${bake} minutes</b>. When will they be ready?`),speech,`<span class="digital" id="dig">${fmtT(now)}</span>`);
+  $('#work').innerHTML=clockSVG('ck')+`<div class="hint">把长针往前拨 ${bake} 分钟（顺时针）</div>`;
+  const ctl=dragClock($('#ck'),now,5,t=>{ $('#dig').textContent=fmtT(t); const d=t-now; $('#hintArea').innerHTML=`<div class="hint">已经过了 <b style="color:var(--pink-d)">${d}</b> 分钟</div>`; });
+  $('#ansArea').innerHTML=`<div class="tbtns"><button class="mini" data-d="-5">−5 分</button><button class="mini" data-d="5">+5 分</button><button class="mini" data-d="15">+15 分</button></div><button class="big mint" id="setOk">✓ 就是这个时间</button>`;
+  $$('.tbtns button').forEach(b=>b.onclick=()=>ctl.set(ctl.get()+ +b.dataset.d));
+  window.__ans=end; const t0=Date.now(); let wrong=0;
+  for(;;){ await new Promise(r=>$('#setOk').onclick=r);
+    if(((ctl.get()-end)%720+720)%720===0){ burst(innerWidth*.35,innerHeight/2,['bell','sparkle','cupcake']); say(L(`叮！${zhT(end)}烤好啦！`,`Ding! Ready at ${enT(end)}!`)); await sleep(1200); return {k:'t5',ok:wrong===0,ms:Date.now()-t0}; }
+    wrong++; say('还没到哦'); if(wrong>=2){ ctl.set(end); $('#hintArea').innerHTML=''; await new Promise(r=>{ $('#hintArea').innerHTML=`<div class="hint" style="font-size:20px">${L(`从 ${fmtT(now)} 往后数 ${bake} 分钟，就是 ${fmtT(end)}。`,`Count ${bake} minutes on from ${fmtT(now)}: it's ${fmtT(end)}.`)}</div>`; $('#ansArea').innerHTML=`<button class="big mint" id="gotIt">${L('我看懂了 →','Got it →')}</button>`; $('#gotIt').onclick=r; }); return {k:'t5',ok:false,ms:Date.now()-t0}; } } }
+
+/* =====================================================================
+   蛋糕柜（分数）
+   Levels: 1 一半 & 平均分 → 2 四分之一 → 3 三分之一 → 4 几分之几（3/4, 5/8）→ 5 比大小
+   ===================================================================== */
+const CAKE_INFO={straw:{zh:'草莓蛋糕',en:'strawberry cake'},choc:{zh:'巧克力蛋糕',en:'chocolate cake'},crepe:{zh:'千层蛋糕',en:'mille crepe cake'},pie:{zh:'草莓派',en:'strawberry pie'},lemon:{zh:'柠檬挞',en:'lemon tart'},blue:{zh:'蓝莓芝士蛋糕',en:'blueberry cheesecake'}};
+let CAKES=Object.keys(CAKE_INFO), CAKE='straw', cakeIx=Math.floor(Math.random()*6); const CK=()=>CAKE_INFO[CAKE];
+const FR_LV=[null,{name:'一半',dens:[2]},{name:'四分之一',dens:[2,4]},{name:'三分之一',dens:[2,3,4]},{name:'几分之几',dens:[3,4,6,8]},{name:'比大小',dens:[2,3,4,6,8]}];
+const zhF=(n,d)=> d===2&&n===1?'二分之一（一半）':`${NUM[d]||d}分之${NUM[n]||n}`;
+const fracHTML=(n,d)=>`<span class="frac"><span>${n}</span><span>${d}</span></span>`;
+function cakeSVG(id,d,{uneven=false,taken=[],sel=[],size=240}={}){ const R=100; let angs=Array.from({length:d+1},(_,i)=>i/d*360);
+  if(uneven){ angs=[0,...Array.from({length:d-1},(_,i)=>(i+1)/d*360+(i%2?22:-28)),360]; }
+  const P=a=>[Math.sin(a*Math.PI/180)*R,-Math.cos(a*Math.PI/180)*R]; const ck=CAKE_INFO[CAKE]||CAKE_INFO.straw;
+  const defs=`<defs><pattern id="${id}p" patternUnits="userSpaceOnUse" x="-${R}" y="-${R}" width="${2*R}" height="${2*R}"><image href="../assets/cakes/${CAKE}.webp" width="${2*R}" height="${2*R}" preserveAspectRatio="xMidYMid slice"/></pattern></defs>`;
+  const slices=angs.slice(0,-1).map((a,i)=>{ const b=angs[i+1]; const [x1,y1]=P(a),[x2,y2]=P(b); const large=b-a>180?1:0; const mid=(a+b)/2; const [mx,my]=P(mid);
+    const on=sel.includes(i), dx=on?mx*.13:0, dy=on?my*.13:0;
+    return `<path class="sl ${on?'sel':''} ${taken.includes(i)?'taken':''}" data-i="${i}" style="fill:url(#${id}p)" transform="translate(${dx},${dy})" d="${d===1?`M0,-${R}A${R},${R} 0 1 1 -0.01,-${R}Z`:`M0,0L${x1},${y1}A${R},${R} 0 ${large} 1 ${x2},${y2}Z`}"/>`; }).join('');
+  return `<svg id="${id}" class="cake" viewBox="-124 -124 248 248" width="${size}" height="${size}">${defs}<ellipse cx="0" cy="8" rx="118" ry="114" fill="#000" opacity=".08"/><circle r="116" fill="#FFF" stroke="#EADBD3" stroke-width="3"/>${slices}</svg>`; }
+async function cakeOrder(c,LV){ const lv=LV||B.frac.lv; const dens=FR_LV[Math.min(lv,5)].dens; const kinds= lv===1?['equal','name','take','take']: lv>=5?['name','take','compare']: ['name','take','take'];
+  let kind,d,n,m,d1,d2; const t0=Date.now(); let wrong=0;
+  for(let g=0;g<80;g++){ kind=pick(kinds); d=pick(dens); n= lv>=4? 1+Math.floor(Math.random()*(d-1)) : 1; m=d; let sig;
+    if(kind==='equal'){ d=pick([2,3,4,6]); sig='e'+d; }
+    else if(kind==='compare'){ [d1,d2]=shuffle(dens.slice()).slice(0,2); if(d1===d2) d2=d1===2?4:2; sig='c'+Math.min(d1,d2)+'-'+Math.max(d1,d2); }
+    else { if(kind==='take' && lv<=3 && Math.random()<0.55){ const ks=[2,3,4].filter(k=>d*k<=8); if(ks.length) m=d*pick(ks); } sig=kind+n+'/'+d; }
+    if(!SEEN.has(sig)){ SEEN.add(sig); break; } }
+  CAKE=CAKES[(cakeIx++)%CAKES.length];
+  if(kind==='equal'){ // which cake is cut fairly?
+    const fair=Math.random()<.5; $('#stepName').textContent='平均分';
+    splitLayout(c,L(`我想把蛋糕<b>平均</b>分给 ${NUM[d]||d} 个朋友。哪一个蛋糕切得<b>一样大</b>？`,`I want to share a cake <b>equally</b> with ${d} friends. Which cake is cut into <b>equal pieces</b>?`),L(`哪一个蛋糕切得一样大？`,`Which cake is cut into equal pieces?`),L('每一块都一样大，才叫“平均分”','Equal shares means every piece is the same size'));
+    $('#work').innerHTML=`<div class="cakes2">${[0,1].map(i=>`<button class="cakebtn" data-f="${(i===0)===fair?1:0}">${cakeSVG('c'+i,d,{uneven:(i===0)!==fair,size:200})}</button>`).join('')}</div>`;
+    $('#ansArea').innerHTML='<div class="hint">点一下切得一样大的那个蛋糕</div>'; window.__ans='fair';
+    return await new Promise(res=>$$('.cakebtn').forEach(b=>b.onclick=async()=>{ if(b.dataset.f==='1'){ b.classList.add('right'); say('对啦！每一块都一样大'); burst(innerWidth*.35,innerHeight/2,['cupcake','sparkle','heart']); await sleep(1100); res({k:'f1',ok:wrong===0,ms:Date.now()-t0}); } else { wrong++; b.classList.add('wrong'); say('这个蛋糕有大块也有小块哦'); } })); }
+  if(kind==='name'){ // cake cut into d, one (or n) slices taken – name the fraction
+    const sel=Array.from({length:n},(_,i)=>i);
+    $('#stepName').textContent='是几分之几';
+    splitLayout(c,L(`${CK().zh}平均切成了 <b>${d}</b> 块，我拿走 <b>${n}</b> 块。我拿的是整个蛋糕的几分之几？`,`The ${CK().en} is cut into <b>${d}</b> equal pieces and I take <b>${n}</b>. What fraction of the cake did I take?`),L(`蛋糕平均切成了${NUM[d]||d}块，我拿走${NUM[n]||n}块，是几分之几？`,`The cake has ${d} equal pieces and I take ${n}. What fraction is that?`),L('数一数：一共几块？拿走几块？','Count: how many pieces in all? How many taken?'));
+    $('#work').innerHTML=cakeSVG('ck',d,{sel})+`<div class="hint">突出来的是拿走的 ${n} 块</div>`;
+    const cand=[[n,d],[1,d===2?4:2],[n,d+ (d<8?1:-1)],[d-n||1,d],[d,n||1]].filter((x,i,a)=>x[0]>0&&x[1]>0&&x[0]<=x[1]&&a.findIndex(y=>y[0]===x[0]&&y[1]===x[1])===i).slice(0,4);
+    if(cand.length<3) cand.push([1,8]); const opts=shuffle(cand.slice(0,4));
+    $('#ansArea').innerHTML=`<div class="fopts">${opts.map(([a,b])=>`<button class="fopt" data-v="${a}/${b}">${fracHTML(a,b)}</button>`).join('')}</div><div class="hint">下面的数 = 一共切成几块，上面的数 = 拿了几块</div>`;
+    window.__ans=`${n}/${d}`;
+    return await new Promise(res=>$$('.fopt').forEach(b=>b.onclick=async()=>{ if(b.dataset.v===`${n}/${d}`){ b.classList.add('right'); say(L(zhF(n,d),enF(n,d))); burst(innerWidth*.7,innerHeight/2,['cupcake','sparkle','heart']); await sleep(1300); res({k:'f'+lv,ok:wrong===0,ms:Date.now()-t0}); }
+      else { wrong++; b.classList.add('wrong'); say('再数一数，一共切成几块？'); } })); }
+  if(kind==='take'){ const need=n*m/d;
+    $('#stepName').textContent='拿蛋糕';
+    splitLayout(c,L(`我要 ${fracHTML(n,d)} 个${CK().zh}，请帮我拿出来！`,`I'd like ${fracHTML(n,d)} of a ${CK().en}, please!`),L(`我要${zhF(n,d)}个${CK().zh}，请帮我拿出来`,`I'd like ${enF(n,d)} of a cake, please`),L(`${zhF(n,d)}`,enF(n,d)));
+    let sel=[]; const draw=()=>{ $('#work').innerHTML=cakeSVG('ck',m,{sel})+`<div class="counter">${L(`已选 <b>${sel.length}</b> 块 / 一共 ${m} 块`,`Picked <b>${sel.length}</b> of ${m} pieces`)}</div>`;
+      $$('#ck .sl').forEach(p=>p.onclick=()=>{ const i=+p.dataset.i; sel=sel.includes(i)?sel.filter(x=>x!==i):sel.concat(i); draw(); }); };
+    draw(); $('#ansArea').innerHTML=`<div class="hint">点蛋糕，选出要拿的块数（再点一下可以放回去）</div><button class="big mint" id="takeOk">✓ 打包给客人</button>`; window.__ans=need;
+    if(m!==d) $('#hintArea').innerHTML=`<div class="hint">${L(`这个蛋糕切成了 ${m} 块哦`,`This cake is cut into ${m} pieces`)}</div>`;
+    for(;;){ await new Promise(r=>$('#takeOk').onclick=r);
+      if(sel.length===need){ say(L('拿对啦！'+zhF(n,d),'Well done! '+enF(n,d))); burst(innerWidth*.35,innerHeight/2,['cupcake','sparkle','heart']); await sleep(1300); return {k:'f'+lv,ok:wrong===0,ms:Date.now()-t0}; }
+      wrong++;
+      if(m===d){ say(L(`分母是${NUM[d]}，分子是${NUM[n]}，要拿${NUM[n]}块哦`,`The bottom number is ${d}, the top number is ${n}, so take ${n} pieces`)); $('#hintArea').innerHTML=`<div class="hint">${fracHTML(n,d)}：下面的 ${d} 是一共切成 ${d} 块，上面的 ${n} 是拿 ${n} 块</div>`; }
+      else { say(L(`${m}块平均分成${NUM[d]}份，每份是${NUM[m/d]||m/d}块`,`Share ${m} pieces into ${d} equal parts: each part is ${m/d} pieces`)); $('#hintArea').innerHTML=`<div class="hint">${L(`${m} 块平均分成 ${d} 份，每份 ${m/d} 块。要拿 ${n} 份 = ${need} 块`,`${m} pieces in ${d} equal parts → ${m/d} each. Take ${n} part${n>1?'s':''} = ${need} pieces`)}</div>`; }
+      if(wrong>=2){ sel=Array.from({length:need},(_,i)=>i); draw(); await sleep(2200); return {k:'f'+lv,ok:false,ms:Date.now()-t0}; } } }
+  // compare: which piece is bigger?
+  $('#stepName').textContent='哪块大';
+  splitLayout(c,L(`${fracHTML(1,d1)} 个${CK().zh}和 ${fracHTML(1,d2)} 个${CK().zh}，<b>哪一块更大</b>？`,`${fracHTML(1,d1)} of a ${CK().en} or ${fracHTML(1,d2)} of a ${CK().en} — <b>which piece is bigger</b>?`),L(`${zhF(1,d1)}和${zhF(1,d2)}，哪一块更大？`,`${enF(1,d1)} or ${enF(1,d2)}: which piece is bigger?`),L('想一想：切得越多，每块越……？','Think: the more pieces, the … each piece?'));
+  $('#work').innerHTML=`<div class="cakes2">${[d1,d2].map((dd,i)=>`<button class="cakebtn" data-d="${dd}">${cakeSVG('c'+i,dd,{sel:[0],size:190})}<div style="font-size:26px;font-weight:900">${fracHTML(1,dd)}</div></button>`).join('')}</div>`;
+  $('#ansArea').innerHTML='<div class="hint">点更大的那一块</div>'; const big=Math.min(d1,d2); window.__ans=big;
+  return await new Promise(res=>$$('.cakebtn').forEach(b=>b.onclick=async()=>{ if(+b.dataset.d===big){ b.classList.add('right'); say(L(`对！${zhF(1,big)}更大，切的块数越少，每一块越大`,`Yes! ${enF(1,big)} is bigger. Fewer pieces means bigger pieces.`)); burst(innerWidth*.35,innerHeight/2,['cupcake','sparkle']); await sleep(1600); res({k:'f5',ok:wrong===0,ms:Date.now()-t0}); } else { wrong++; b.classList.add('wrong'); say('切的块数越多，每一块就越小哦'); } })); }
+
+/* level-up rule for time & fractions: 5 first-try correct in a row → next level; 2 misses in a row → stay with gentler orders */
+function levelStep(S,ok,max){ S.streak=ok?(S.streak||0)+1:0; S.done=(S.done||0)+1; S.okN=(S.okN||0)+(ok?1:0); if(S.streak>=5 && S.lv<max){ S.lv++; S.streak=0; return true; } return false; }
+
+/* ---------- a shift (6 orders) ---------- */
+async function openShop(kind='mix'){ if(TC.guard()) return; go('play'); const used=[], log={d:TC.today(),ts:Date.now(),kind,items:[]};
+  baker('叮咚！客人来啦！');
+  if(kind==='time'||kind==='frac') return otherShift(kind);
+  let streak=0, chalUsed=false, chalWin=0;
+  for(let i=0;i<ORDERS;i++){ let chal=false, k=null; if(streak>=3 && !chalUsed && i<ORDERS-1){ k=challengeFact(used); if(k){ chal=true; chalUsed=true; } }
+    if(!k) k=chooseFact(used); used.push(k); setDots(ORDERS,i,chal); const c=customer(); if(chal){ say(L('哇，挑战单来啦！','Wow, a challenge order!')); await sleep(1400); }
+    const div= kind==='div' || (kind==='mix' && B.facts[k] && Math.random()<0.4);
+    const r= div? await boxOrder(k,c) : await trayOrder(k,c);
+    // quick (typed without using the hands-on side) and fast = strong evidence; using hands-on = learning
+    const fast=r.mode==='quick'; record(k, r.ok, fast?r.ms:Math.max(r.ms,FAST_MS));
+    if(div){ const d=fst('d'+k); d.seen++; d.ok+=r.ok?1:0; d.wrong+=r.ok?0:1; }
+    log.items.push({k:r.k,ok:r.ok,ms:r.ms,mode:r.mode,chal}); streak=r.ok?streak+1:0; if(chal&&r.ok) chalWin++; TC.save(); }
+  B.sessions.push(log); const msgs=maybeUnlock(); const good=log.items.filter(x=>x.ok).length;
+  if(chalWin) msgs.unshift(L('挑战单成功！多赚 $0.50','Challenge done! +$0.50 bonus'));
+  const cents=120+good*30+chalWin*50; TC.earn(cents,'面包店营业'); const tr=TC.taskDone('math'); await TC.saveNow();
+  $('#stepName').textContent='打烊啦'; $('#dots').innerHTML='';
+  $('#stage').innerHTML=`<img src="../assets/outfits/${T.outfit}.webp" style="height:220px" onerror="this.remove()"><h1>6 单都做完啦！</h1>
+   <div style="font-size:22px">一次就做对 <b style="color:var(--pink-d)">${good}</b> 单</div><div class="chip" style="font-size:24px">${TC.icon('coin')} +${TC.fmt(cents)}</div>
+   ${msgs.map(m=>`<div style="font-size:21px;font-weight:900;color:#2E8B74">${esc(m)}</div>`).join('')}
+   ${tr.allDoneNow?`<div style="font-size:21px;font-weight:900;color:#E2683F">今天的任务全部完成！奖励 ${TC.fmt(tr.bonus)} + 1 个印章</div>`:''}
+   <div style="display:flex;gap:14px"><button class="big pink" id="again">再来 6 单</button><button class="big white" id="toShop">回店里</button></div>`;
+  burst(innerWidth/2,innerHeight/3,['coin','cupcake','cupcake','sparkle'],18); say(`打烊啦！今天一次做对${good}单`+(msgs.length?'，还解锁了新东西！':''));
+  $('#again').onclick=()=>TC.afterReward(()=>openShop(kind)); $('#toShop').onclick=()=>TC.afterReward(()=>go('home')); }
+
+
+async function otherShift(kind){ const S= kind==='time'?B.time:B.frac, max=kind==='time'?5:5, LV=kind==='time'?TIME_LV:FR_LV; const log={d:TC.today(),ts:Date.now(),kind,items:[]}; let up=false;
+  SEEN=new Set(); let streak=0, chalUsed=false;
+  for(let i=0;i<ORDERS;i++){ const chal= streak>=3 && !chalUsed && S.lv<max && i<ORDERS-1; if(chal) chalUsed=true; setDots(ORDERS,i,chal); const c=customer();
+    if(chal){ say(L('哇，挑战单来啦！难一点点哦','Wow, a challenge order! A little harder.')); await sleep(1600); }
+    const r= kind==='time'? await ovenOrder(c,chal?S.lv+1:0) : await cakeOrder(c,chal?S.lv+1:0);
+    log.items.push({k:r.k,ok:r.ok,ms:r.ms,lv:chal?S.lv+1:S.lv,chal}); streak=r.ok?streak+1:0;
+    if(chal){ if(r.ok){ S.lv++; S.streak=0; up=true; } } else if(levelStep(S,r.ok,max)) up=true; TC.save(); }
+  B.sessions.push(log); const good=log.items.filter(x=>x.ok).length; const cents=120+good*30; TC.earn(cents,kind==='time'?'面包店烤箱计时':'面包店切蛋糕'); const tr=TC.taskDone('math'); await TC.saveNow();
+  $('#stepName').textContent='打烊啦'; $('#dots').innerHTML='';
+  $('#stage').innerHTML=`<img src="../assets/outfits/${T.outfit}.webp" style="height:220px" onerror="this.remove()"><h1>6 单都做完啦！</h1>
+   <div style="font-size:22px">一次就做对 <b style="color:var(--pink-d)">${good}</b> 单</div><div class="chip" style="font-size:24px">${TC.icon('coin')} +${TC.fmt(cents)}</div>
+   ${up?`<div style="font-size:21px;font-weight:900;color:#2E8B74">升级啦！下一关：${LV[S.lv].name}</div>`:''}
+   ${tr.allDoneNow?`<div style="font-size:21px;font-weight:900;color:#E2683F">今天的任务全部完成！奖励 ${TC.fmt(tr.bonus)} + 1 个印章</div>`:''}
+   <div style="display:flex;gap:14px"><button class="big pink" id="again">再来 6 单</button><button class="big white" id="toShop">回店里</button></div>`;
+  burst(innerWidth/2,innerHeight/3,['coin','cupcake','cupcake','sparkle'],18); say(`打烊啦！今天一次做对${good}单`+(up?'，还升级了！':''));
+  $('#again').onclick=()=>TC.afterReward(()=>openShop(kind)); $('#toShop').onclick=()=>TC.afterReward(()=>go('home')); }
+/* ---------- home ---------- */
+let go=function(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); if(id==='home') renderHome(); if($('#baker')) $('#baker').style.display=id==='home'?'':'none'; $('#bakerSay').classList.remove('on'); };
+// station boxes in % of the bakery picture (x0,y0,x1,y1); label = position of the blank plaque
+let STATIONS=[
+ {id:'time', zh:'烤箱', box:[1,33,23.5,80], lab:[13.1,28], tag:'烤箱计时（看时间）', go:()=>openShop('time')},
+ {id:'mul',  zh:'烤盘台', box:[24.6,33,56.4,80], lab:[39.8,28], tag:'烤盘订单（乘法）', go:()=>openShop('mul')},
+ {id:'div',  zh:'打包台', box:[57,33,80,80], lab:[67.3,28], tag:'装盒订单（除法）', go:()=>openShop('div')},
+ {id:'frac', zh:'蛋糕柜', box:[80.6,33,100,80], lab:[92,27.5], tag:'切蛋糕（分数）', go:()=>openShop('frac')},
+];
+try{ if(window.BAKERY_LAYOUT) STATIONS=STATIONS.map(s=>Object.assign(s,window.BAKERY_LAYOUT[s.id]||{})); }catch(e){}
+function renderHome(){ $('#coins').innerHTML=TC.icon('coin')+' '+TC.fmt(T.coins);
+  $('#stations').innerHTML=STATIONS.map(s=>{ const [x0,y0,x1,y1]=s.box; return `<div class="st ${s.soon?'soon':''}" data-id="${s.id}" style="left:${x0}%;top:${y0}%;width:${x1-x0}%;height:${y1-y0}%"><div class="tag">${s.tag}</div></div><div class="st lab0" style="left:${s.lab[0]}%;top:${s.lab[1]}%;pointer-events:none"><span class="lab" style="top:0">${s.zh}</span></div>`; }).join('');
+  $$('.st[data-id]').forEach(el=>el.onclick=()=>{ const s=STATIONS.find(x=>x.id===el.dataset.id); if(s.soon) return bubbleAt(el,s.soon); s.go(); });
+  $('#caseBar').innerHTML='<div class="cl">点心柜</div>'+TABLE_ORDER.map(t=>{ const own=B.treats.includes(t); return `<div class="${own?'':'lock'}" title="${t} 的乘法表 ${Math.round(tableMastery(t)*100)}%">${TREATS[t][0]}<small>×${t}</small></div>`; }).join('');
+  const tk=TC.tasksToday().find(t=>t.game==='math'); $('#taskLine').textContent= tk? (tk.done>=tk.need?'今天的面包店任务完成啦！':`今日任务：做 ${tk.need} 轮订单（已完成 ${tk.done}）`):''; $('#taskLine').style.display=tk?'':'none'; }
+function bubbleAt(el,text){ $$('.bubble').forEach(b=>b.remove()); const r=el.getBoundingClientRect(), sr=$('#scene').getBoundingClientRect(); const b=document.createElement('div'); b.className='bubble'; b.textContent=text;
+  b.style.left=((r.left+r.width/2-sr.left)/sr.width*100)+'%'; b.style.top=((r.top+r.height*.35-sr.top)/sr.height*100)+'%'; $('#scene').appendChild(b); say(text); setTimeout(()=>b.remove(),3500); }
+$('#toTown').onclick=()=>{ location.href='../小镇.html'; };
+$('#quit').onclick=()=>{ speechSynthesis.cancel(); go('home'); };
+$('#pBack').onclick=()=>go('home');
+$('#toParent').onclick=async()=>{ if(await TC.askPin()) openParent(); };
+if($('#baker')) $('#baker').onclick=()=>baker(pick(['数不过来的时候，一排一排地数！','2、4、6、8……跳着数更快哦','你是我最得力的小帮手！','分东西要"平均"，每份一样多～']),true);
+
+/* ---------- parent ---------- */
+function openParent(){ go('parent'); const last=B.sessions.slice(-10); const items=last.flatMap(s=>s.items);
+  const acc=items.length?Math.round(items.filter(x=>x.ok).length/items.length*100):0; const avg=items.length?Math.round(items.reduce((a,x)=>a+x.ms,0)/items.length/100)/10:0;
+  const quick=items.filter(x=>x.mode==='quick'), qacc=quick.length?Math.round(quick.filter(x=>x.ok).length/quick.length*100):null;
+  let verdict='还在热身，多玩几次再看'; if(items.length>=18){ if(acc>=90&&avg<6) verdict='偏简单：系统会自动加新的乘法表；也可以在下面手动开放'; else if(acc<70) verdict='偏难：会自动多复习错题，暂不加新表'; else verdict='难度刚好'; }
+  $('#pBody').innerHTML=`<div class="pc"><h3>最近 ${last.length} 次营业：一次答对率 ${acc}% · 平均用时 ${avg} 秒${qacc!==null?` · 快速订单正确率 ${qacc}%`:''}</h3><div style="font-size:16px">${verdict}</div>
+    <div class="muted" style="font-size:14px;margin-top:6px">规则：同一张表 80% 的算式"掌握"（连续几次一次答对且 6 秒内）就解锁下一张。顺序：${TABLE_ORDER.join(' → ')}。新算式先"放烤盘"看着数，熟了变"看烤盘"，再熟就是只有算式的快速订单。除法用她做过的乘法反过来出。</div></div>
+   <div class="pc"><h3>乘法表掌握情况（行 = 几排，列 = 每排几个）</h3><div class="grid10"><div class="h"></div>${Array.from({length:10},(_,i)=>`<div class="h">×${i+1}</div>`).join('')}
+    ${Array.from({length:10},(_,r)=>`<div class="h">${r+1}</div>`+Array.from({length:10},(_,c)=>{ const s=B.facts[fk(r+1,c+1)]; const cls=!s?'':(s.box>=MASTER-1?'m':(s.wrong>s.ok?'w':'l')); return `<div class="${cls}">${s?(r+1)*(c+1):''}</div>`; }).join('')).join('')}</div>
+    <div class="muted" style="font-size:13px;margin-top:6px">绿 = 掌握 · 黄 = 学习中 · 红 = 常错 · 灰 = 还没出过</div></div>
+   <div class="pc"><h3>开放的乘法表</h3>${TABLE_ORDER.map(t=>`<label style="margin-right:12px;font-size:17px"><input type="checkbox" data-t="${t}" ${B.tables.includes(t)?'checked':''}> ×${t}</label>`).join('')}
+    <div class="muted" style="font-size:13px;margin-top:6px">一般不用动，系统会自动开放。如果觉得太简单，可以直接勾上更难的表。</div></div>`;
+  $('#pBody').insertAdjacentHTML('beforeend',`<div class="pc"><h3>看时间 & 分数</h3>
+    <div style="font-size:16px;line-height:1.9">看时间：第 ${B.time.lv} 关「${TIME_LV[B.time.lv].name}」 · 连续一次答对 ${B.time.streak||0}/5 · 共做 ${B.time.done||0} 单，一次答对 ${B.time.okN||0}<br>
+    分数：第 ${B.frac.lv} 关「${FR_LV[B.frac.lv].name}」 · 连续一次答对 ${B.frac.streak||0}/5 · 共做 ${B.frac.done||0} 单，一次答对 ${B.frac.okN||0}</div>
+    <div class="muted" style="font-size:13px;margin:6px 0">规则：连续 5 单一次做对就升一关。看时间：整点 → 半点 → 一刻钟 → 五分钟 → 烤多久（经过时间）。分数：一半/平均分 → 四分之一 → 三分之一 → 几分之几 → 比大小。</div>
+    看时间关卡 <select id="tlv">${TIME_LV.slice(1).map((x,i)=>`<option value="${i+1}" ${B.time.lv===i+1?'selected':''}>${i+1} ${x.name}</option>`).join('')}</select>　
+    分数关卡 <select id="flv">${FR_LV.slice(1).map((x,i)=>`<option value="${i+1}" ${B.frac.lv===i+1?'selected':''}>${i+1} ${x.name}</option>`).join('')}</select></div>`);
+  $('#tlv').onchange=e=>{ B.time.lv=+e.target.value; B.time.streak=0; TC.save(); }; $('#flv').onchange=e=>{ B.frac.lv=+e.target.value; B.frac.streak=0; TC.save(); };
+  $$('[data-t]').forEach(x=>x.onchange=()=>{ const t=+x.dataset.t; if(x.checked){ if(!B.tables.includes(t)) B.tables.push(t); } else { B.tables=B.tables.filter(v=>v!==t); if(!B.tables.length) B.tables=[2]; } TC.save(); }); }
+
+/* ---------- boot ---------- */
+(async()=>{ T=await TC.ready; T.bake=T.bake||{facts:{},tables:[2,5,10],treats:[],sessions:[]}; B=T.bake;
+  ['facts'].forEach(k=>B[k]=B[k]||{}); B.time=B.time||{lv:1,streak:0}; B.frac=B.frac||{lv:1,streak:0}; ['tables','treats','sessions'].forEach(k=>B[k]=B[k]||[]); if(!B.tables.length) B.tables=[2,5,10];
+  if(!B.seeded){ [2,5,10].forEach(t=>tableFacts(t).forEach(k=>{ if(!B.facts[k]) B.facts[k]={box:3,seen:0,ok:0,wrong:0,ms:[],due:null}; })); B.seeded=true; }
+  TC.startTimer(); go('home');
+  if(location.hash==='#parent'){ history.replaceState(null,'',location.pathname); if(await TC.parentPass()){ openParent(); return; } }
+  if(TC.guard()) return;
+  setTimeout(()=>{ const m=B.sessions.length?'欢迎回来，小店长！今天也有好多客人哦':'欢迎来到面包店！我是猫店长，今天你来帮我卖点心吧！'; baker(m); say(m); },700); })();
+</script>
+</body>
+</html>

@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="en" data-town-root="..">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>我的小屋 · 日记</title>
+<link rel="icon" href="../assets/icon.png">
+<style>
+:root{--ink:#3B3049;--soft:#8A7F99;--gold:#FFD98A;--font:ui-rounded,"SF Pro Rounded","PingFang SC",system-ui,sans-serif;--hand:"Chalkboard SE","Comic Sans MS","Marker Felt",ui-rounded,sans-serif}
+*{box-sizing:border-box}
+html,body{margin:0;height:100%;overflow:hidden;background:#140f24;font-family:var(--font);color:var(--ink);user-select:none;-webkit-user-select:none}
+button{font-family:inherit;border:none;cursor:pointer;color:inherit}
+#room{position:fixed;inset:0;display:flex;align-items:center;justify-content:center}
+#scene{position:relative;width:min(100vw,calc(100vh*16/9));aspect-ratio:16/9;background:url(../assets/bedroom.jpg) center/100% 100% no-repeat;animation:dim 2.5s ease}
+@keyframes dim{from{filter:brightness(.3)}}
+#sky{position:absolute;pointer-events:none}
+#pet{position:absolute;width:11%;aspect-ratio:1;z-index:14;cursor:pointer;transition:left 1.6s ease-in-out,top 1.6s ease-in-out;filter:drop-shadow(0 6px 6px rgba(0,0,0,.25));touch-action:none}
+#pet .bd{position:absolute;inset:0;animation:breathe 4s ease-in-out infinite;transform-origin:50% 90%}
+#pet.flip .bd i{transform:scaleX(-1)}
+#pet.walk .bd{animation:hopw .4s ease-in-out infinite}
+#pet.wiggle .bd{animation:wig .6s}
+@keyframes hopw{50%{transform:translateY(-10%)}}
+@keyframes wig{20%{transform:rotate(-8deg) scale(1.06,.94)}40%{transform:rotate(7deg) scale(.96,1.06)}60%{transform:rotate(-4deg)}80%{transform:rotate(3deg)}}
+.pbub{position:absolute;z-index:17;transform:translate(-50%,-100%);background:#fff;border-radius:18px;padding:8px 14px;font-weight:900;font-size:17px;color:#4A3A55;box-shadow:0 4px 14px rgba(0,0,0,.25);white-space:nowrap;pointer-events:none;animation:popb .3s}
+.pbub::after{content:'';position:absolute;left:50%;bottom:-8px;margin-left:-8px;border:8px solid transparent;border-top-color:#fff;border-bottom:0}
+@keyframes popb{from{transform:translate(-50%,-80%) scale(.6);opacity:0}}
+.pheart{position:absolute;z-index:17;pointer-events:none;animation:ph 1.3s ease-out forwards}
+@keyframes ph{to{transform:translate(var(--dx),-120px) scale(1.3);opacity:0}}
+#pet i{position:absolute;inset:0;background-repeat:no-repeat}
+#pet::after{content:none;position:absolute;right:-6%;top:-14%;font-size:150%}
+body.day #scene{background-image:url(../assets/bedroom_day.jpg),url(../assets/bedroom.jpg);animation:none}
+body.day #pet::after{content:none}
+body.day{background:#F4E6D4}
+#petName{position:absolute;color:#FFF3D6;font-weight:800;font-size:15px;text-shadow:0 1px 4px #000;transform:translateX(-50%);white-space:nowrap}
+@keyframes breathe{50%{transform:scale(1.04)}}
+.glow{position:absolute;inset:0;pointer-events:none;background:radial-gradient(circle at 50% 55%,rgba(255,200,120,.10),transparent 55%)}
+#top{position:fixed;top:14px;left:14px;right:14px;display:flex;gap:10px;z-index:20}
+.pill{background:rgba(255,248,235,.92);border-radius:999px;padding:10px 18px;font-weight:800;font-size:17px;box-shadow:0 4px 14px rgba(0,0,0,.25)}
+.grow{flex:1}
+#card{position:fixed;z-index:15;left:52%;top:50%;transform:translate(-50%,-50%);width:min(640px,92vw);max-height:88vh;overflow:auto;background:rgba(255,249,238,.97);border-radius:30px;padding:26px 30px;box-shadow:0 20px 70px rgba(0,0,0,.45);animation:rise .6s cubic-bezier(.3,1.3,.5,1)}
+@keyframes rise{from{transform:translate(-50%,-42%);opacity:0}}
+#card h1{margin:0 0 6px;font-size:34px;font-weight:900}
+#card .sub{color:var(--soft);font-size:18px;margin-bottom:16px}
+.moods{display:grid;grid-template-columns:repeat(5,1fr);gap:10px}
+.moods button{background:#fff;border-radius:20px;padding:12px 4px;font-size:15px;font-weight:800;box-shadow:0 4px 0 #EFE3D2;transition:transform .15s}
+.moods button span{display:block;font-size:46px;line-height:1}
+.mood{display:inline-block;width:1.15em;height:1.15em;vertical-align:-.25em;background:url(../assets/moods.webp) 0 0/500% 200% no-repeat}
+.moods button:hover{transform:translateY(-4px)}
+.prompts{display:grid;gap:12px}
+.prompts button{background:#fff;border-radius:20px;padding:18px 22px;text-align:left;font-size:22px;font-weight:800;box-shadow:0 4px 0 #EFE3D2;display:flex;gap:14px;align-items:center}
+.prompts button small{display:block;font-size:15px;color:var(--soft);font-weight:600;margin-top:2px}
+.prompts button .e{font-size:38px}
+.paper{background:repeating-linear-gradient(#FFFDF7 0 43px,#D9E6F5 43px 45px);border-radius:18px;padding:8px 18px;box-shadow:inset 0 0 0 2px #F0E4D2}
+textarea{width:100%;min-height:300px;border:none;background:transparent;resize:none;font:26px/45px var(--hand);color:#2E2546;outline:none;user-select:text;-webkit-user-select:text}
+.starters{display:flex;gap:8px;flex-wrap:wrap;margin:10px 0}
+.starters button{background:#F3ECFF;border-radius:999px;padding:7px 14px;font-size:15px;font-weight:700}
+.big{font-size:22px;font-weight:900;border-radius:999px;padding:14px 30px;box-shadow:0 5px 0 rgba(0,0,0,.18)}
+.big:disabled{opacity:.4}
+.teal{background:#3FBFAD;color:#fff}.violet{background:#8C7AE6;color:#fff}.white{background:#fff}.gold{background:#FFC94D}
+.row{display:flex;gap:14px;align-items:center;justify-content:center;flex-wrap:wrap}
+.note{background:#FFF1F4;border-radius:22px;padding:22px;font:24px/1.6 var(--hand);white-space:pre-wrap;user-select:text;-webkit-user-select:text}
+#env{position:absolute;font-size:3.6vw;cursor:pointer;animation:bounce 1.4s ease-in-out infinite;filter:drop-shadow(0 0 12px rgba(255,190,210,.9));z-index:12}
+@keyframes bounce{50%{transform:translateY(-14%) rotate(-6deg)}}
+.flystar{position:fixed;z-index:30;font-size:46px;pointer-events:none;transition:all 1.6s cubic-bezier(.4,0,.2,1)}
+.entry{background:#fff;border-radius:20px;padding:16px 18px;margin-bottom:12px;box-shadow:0 4px 0 #EFE3D2}
+.entry .h{display:flex;gap:10px;align-items:center;font-weight:800;color:var(--soft);font-size:15px;margin-bottom:6px}
+.entry .t{font:21px/1.6 var(--hand);white-space:pre-wrap;user-select:text;-webkit-user-select:text}
+</style>
+</head>
+<body>
+<div id="room"><div id="scene"><canvas id="sky"></canvas><div class="glow"></div><div id="pet"><div class="bd"><i></i></div></div><div id="petName"></div></div></div>
+<div id="top"><span class="grow"></span><button class="pill" id="bookBtn">My Diary</button><button class="pill" id="byeBtn">去睡觉</button></div>
+<div id="card"></div>
+
+<script src="../assets/animals.js"></script>
+<script src="../town-core.js"></script>
+<script>
+"use strict";
+const TC=window.TownCore; let T;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+
+/* ---------- layout constants (fractions of the bedroom picture) ---------- */
+const WIN={x:.11,y:.09,w:.215,h:.43};      // window sky area for stars
+const PET={x:.80,y:.72};                      // companion on the bed
+// other places the companion likes to visit (scene fractions): the bed, the flower rug, the gingham rug, by the window
+const PET_SPOTS=[{x:.80,y:.72},{x:.64,y:.86},{x:.17,y:.86},{x:.10,y:.74},{x:.90,y:.82}]; let PETPOS=null;
+const PET_SAY={ any:[['好舒服呀～','That feels nice!'],['再摸摸我嘛！','Pet me again!'],['我最喜欢你啦！','You are my favourite!'],['嘻嘻，好痒！','Hee hee, that tickles!'],['今天写什么呀？我好想知道！','What will you write today?'],['我会一直陪着你哦','I will stay right here with you'],['你今天真棒！','You did great today!'],['抱抱！','Hug!']],
+  cat:[['喵～呼噜呼噜','Meow~ purr purr']], dog:[['汪汪！摇摇尾巴','Woof woof! Wag wag']], small:[['吱吱，蹭蹭你','Squeak! Nuzzle nuzzle']], sea:[['咕噜咕噜，吐个泡泡','Blub blub, a bubble for you']], wild:[['嗷呜～我是温柔的小家伙','Rawr~ but a very gentle one']] };
+let lastSay=-1, sayT=0, wanderT=null;
+function petBubble(txt){ const sc=$('#scene'); $$('.pbub').forEach(b=>b.remove()); const p=$('#pet'); const b=document.createElement('div'); b.className='pbub'; b.textContent=txt;
+  b.style.left=(parseFloat(p.style.left)+5.5)+'%'; b.style.top=(parseFloat(p.style.top)-1)+'%'; sc.appendChild(b); setTimeout(()=>b.remove(),2600); }
+function petHearts(n=4){ const sc=$('#scene'), p=$('#pet'); for(let i=0;i<n;i++){ const h=document.createElement('div'); h.className='pheart'; h.innerHTML=TC.icon(i%3?'heart':'sparkle');
+  h.style.left=(parseFloat(p.style.left)+3+Math.random()*5)+'%'; h.style.top=(parseFloat(p.style.top)+2)+'%'; h.style.fontSize=(20+Math.random()*14)+'px'; h.style.setProperty('--dx',(Math.random()*60-30)+'px'); h.style.animationDelay=(i*.12)+'s'; sc.appendChild(h); setTimeout(()=>h.remove(),1700); } }
+function petMe(){ const p=$('#pet'); p.classList.remove('wiggle'); void p.offsetWidth; p.classList.add('wiggle'); petHearts();
+  if(Date.now()-sayT<1400) return; sayT=Date.now(); const kind=(ANIMALS[petId]||{}).kind; const pool=PET_SAY.any.concat(PET_SAY[kind]||[], PET_SAY[kind]||[]);
+  let k; do{ k=Math.floor(Math.random()*pool.length); }while(k===lastSay&&pool.length>1); lastSay=k;
+  const [zh,en]=pool[k]; petBubble(TC.L(zh,en)); TC.speak(TC.L(zh,en), TC.lang()==='en'?'en-NZ':'zh-CN', 1.05); }
+function petWander(){ clearTimeout(wanderT); wanderT=setTimeout(()=>{ if(document.hidden||$('#card textarea:focus')){ petWander(); return; }
+  const cur=PETPOS||PET; const opts=PET_SPOTS.filter(s=>s.x!==cur.x||s.y!==cur.y); const nx=opts[Math.floor(Math.random()*opts.length)]; const p=$('#pet');
+  p.classList.toggle('flip',nx.x<cur.x); p.classList.add('walk'); PETPOS=nx; place(); setTimeout(()=>p.classList.remove('walk'),1600); petWander(); }, 14000+Math.random()*12000); }
+function petSetup(){ const p=$('#pet'); $('#pet i').setAttribute('style',TC.animalStyle(petId).replace(/animals(\d)\.webp/,'animals$1t.webp'));
+  let strokes=0, lastX=null; p.onpointerdown=e=>{ lastX=e.clientX; strokes=0; petMe(); };
+  p.onpointermove=e=>{ if(lastX==null||!e.buttons) return; if(Math.abs(e.clientX-lastX)>25){ lastX=e.clientX; if(++strokes%3===0) petMe(); else petHearts(1); } };
+  p.onpointerup=p.onpointerleave=()=>{ lastX=null; }; petWander(); }
+const PILLOW={x:.84,y:.52};                   // where mum's note appears
+const STARS_PER=10;
+
+/* ---------- constellations (points inside the window, 0..1) ---------- */
+const CONS=[
+ {en:'Kitty',zh:'小猫座',p:[[.22,.45],[.28,.22],[.38,.38],[.55,.38],[.65,.22],[.72,.45],[.66,.66],[.47,.76],[.30,.66],[.47,.55]],e:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,0]]},
+ {en:'Puppy',zh:'小狗座',p:[[.20,.30],[.30,.52],[.42,.35],[.58,.35],[.70,.52],[.80,.30],[.68,.70],[.50,.82],[.32,.70],[.50,.58]],e:[[0,1],[1,2],[2,3],[3,4],[4,5],[4,6],[6,7],[7,8],[8,1]]},
+ {en:'Heart',zh:'爱心座',p:[[.50,.36],[.38,.22],[.22,.24],[.14,.40],[.24,.58],[.38,.72],[.50,.84],[.62,.72],[.76,.58],[.86,.40]],e:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,9],[9,0]]},
+ {en:'Dolphin',zh:'海豚座',p:[[.12,.62],[.25,.48],[.40,.38],[.56,.36],[.70,.42],[.82,.32],[.86,.50],[.74,.58],[.55,.66],[.46,.52]],e:[[0,1],[1,2],[2,3],[3,4],[4,5],[5,6],[6,7],[7,8],[8,0],[2,9]]},
+ {en:'Bunny',zh:'小兔座',p:[[.36,.12],[.42,.40],[.58,.40],[.64,.12],[.30,.56],[.40,.74],[.60,.74],[.70,.56],[.50,.58],[.50,.86]],e:[[0,1],[1,2],[2,3],[1,4],[4,5],[5,9],[9,6],[6,7],[7,2]]},
+];
+/* ---------- prompts & moods ---------- */
+// mood faces are pictures: assets/moods.webp (5 × 2)
+function moodHTML(k){ return k==null||k<0?'':`<i class="mood" style="background-position:${(k%5)*25}% ${Math.floor(k/5)*100}%"></i>`; }
+const MOODS=[['','happy','开心'],['','excited','兴奋'],['','calm','平静'],['','loved','被爱'],['','proud','骄傲'],['','tired','累'],['','sad','难过'],['','worried','担心'],['','grumpy','生气'],['','silly','调皮']];
+const PROMPTS=[
+ ['','The best part of my day was…','今天最开心的一件事'],['','Today I learned…','今天学会了什么'],['','If my cat could talk, today it would say…','如果小猫会说话，它今天会说什么'],
+ ['','A note to tomorrow-me:','给明天的自己说一句话'],['','Something beautiful I saw today…','今天看到的一样美的东西'],['','Someone who was kind today…','今天谁对别人很好'],
+ ['','Something funny that happened…','今天发生的一件好笑的事'],['','The yummiest thing I ate today…','今天吃到最好吃的东西'],['','If I had a superpower tomorrow…','如果明天我有超能力'],
+ ['','If I could build anything in the town…','如果我能在小镇盖一栋新房子'],['','A song or sound I liked today…','今天喜欢的一首歌或一个声音'],['','Something tricky I tried today…','今天试了一件有点难的事'],
+ ['','Three words about today…','用三个词形容今天'],['','My animal friend and I went on an adventure…','我和小动物去冒险'],['','I wonder why…','我好奇为什么……'],
+ ['','I am thankful for…','我很感谢……'],['','Something that made me grumpy, and what helped…','让我生气的一件事，后来怎么好了'],['','The best present I could give Mum…','我想送妈妈的礼物'],
+ ['','If I could visit anywhere…','如果可以去任何地方'],['','Write a tiny story about a dragon who…','写一个小龙的小故事'],['','My favourite thing to do in the water…','在水里我最喜欢做的事'],
+ ['','If I had a pony, I would…','如果我有一匹小马'],['','My dream cake would look like…','我梦想中的蛋糕'],['','A game I played with a friend…','和朋友玩的一个游戏'],
+];
+const STARTERS=['Today I ','I felt ','because ','My favourite part was ','Tomorrow I want to '];
+
+/* ---------- music box (generated, gentle, no network) ---------- */
+let AC=null, musicOn=true, musicTimer=null;
+function startMusic(){ TC.bgm('diary'); }
+function stopMusic(){ TC.bgm(null); }
+
+
+/* ---------- sky ---------- */
+function sceneRect(){ return $('#scene').getBoundingClientRect(); }
+function place(){ const r=sceneRect(); const c=$('#sky'); c.style.left=WIN.x*100+'%'; c.style.top=WIN.y*100+'%'; c.style.width=WIN.w*100+'%'; c.style.height=WIN.h*100+'%';
+  c.width=Math.round(r.width*WIN.w*devicePixelRatio); c.height=Math.round(r.height*WIN.h*devicePixelRatio);
+  const P=PETPOS||PET; $('#pet').style.left=(P.x*100-5.5)+'%'; $('#pet').style.top=(P.y*100-10)+'%'; $('#petName').style.left=P.x*100+'%'; $('#petName').style.top=(P.y*100+9)+'%';
+  drawSky(); }
+addEventListener('resize',place);
+let twinkleT=0;
+function consState(n=T.diary.length){ const idx=Math.floor(n/STARS_PER), lit=n%STARS_PER; return {idx, cons:CONS[idx%CONS.length], lit, done:idx}; }
+function drawSky(extraGlow){ const c=$('#sky'), x=c.getContext('2d'); const W=c.width,H=c.height; x.clearRect(0,0,W,H);
+  const {cons,lit}=consState(); const P=cons.p.map(([a,b])=>[a*W,b*H]);
+  x.lineWidth=Math.max(1.5,W/180); x.strokeStyle='rgba(255,236,170,.55)'; x.setLineDash([W/60,W/90]);
+  cons.e.forEach(([a,b])=>{ if(a<lit&&b<lit){ x.beginPath(); x.moveTo(...P[a]); x.lineTo(...P[b]); x.stroke(); } });
+  x.setLineDash([]);
+  P.forEach(([px,py],k)=>{ const on=k<lit; const r=(on?W/26:W/110)*(on?1+0.15*Math.sin(twinkleT/300+k):1);
+    const g=x.createRadialGradient(px,py,0,px,py,r*3); g.addColorStop(0,on?'rgba(255,240,180,1)':'rgba(255,255,255,.35)'); g.addColorStop(1,'rgba(255,240,180,0)');
+    x.fillStyle=g; x.beginPath(); x.arc(px,py,r*3,0,7); x.fill(); x.fillStyle=on?'#FFF6D0':'rgba(255,255,255,.4)'; x.beginPath(); x.arc(px,py,r*.6,0,7); x.fill(); }); }
+function twinkle(){ twinkleT=performance.now(); drawSky(); requestAnimationFrame(twinkle); }
+function nextStarPoint(){ const r=sceneRect(); const {cons,lit}=consState(); const [a,b]=cons.p[lit]||cons.p[0]; return [r.left+(WIN.x+a*WIN.w)*r.width, r.top+(WIN.y+b*WIN.h)*r.height]; }
+
+/* ---------- flow ---------- */
+let entry=null; const card=$('#card');
+function show(html){ card.style.display=''; card.innerHTML=html; card.style.animation='none'; void card.offsetWidth; card.style.animation=''; }
+function hideCard(){ card.style.display='none'; }
+function writtenToday(){ return T.diary.some(e=>e.d===TC.today()); }
+
+function welcome(){ const name=T.childName||TC.L('小朋友','friend'); const note=T.notes.find(n=>!n.read);
+  if(writtenToday()){ show(`<h1>今晚的日记写好啦</h1><div class="sub">You already wrote tonight. Sweet dreams, ${esc(name)}!</div><div class="row"><button class="big white" id="bk">看看我的日记</button><button class="big violet" id="bye2">晚安</button></div>`); $('#bk').onclick=openBook; $('#bye2').onclick=goodbye; return; }
+  show(`<h1>Good evening, ${esc(name)}</h1><div class="sub">晚上好！今晚陪你的是${esc(ANIMALS[petId]?.zh||'小动物')}。先告诉我，今天你的心情是……</div>
+   <div class="moods">${MOODS.map((m,k)=>`<button data-m="${k}"><span>${moodHTML(k)}</span>${m[1]}${TC.lang()==='en'?'':`<br><small style="color:#8A7F99">${m[2]}</small>`}</button>`).join('')}</div>`);
+  TC.speakZh(`晚上好，${name}！今天你的心情怎么样？`);
+  $$('[data-m]').forEach(b=>b.onclick=()=>{ entry={d:TC.today(), ts:Date.now(), mood:+b.dataset.m}; TC.speak(MOODS[+b.dataset.m][1],'en-NZ',.9); choosePrompt(); });
+  if(note) showEnvelope(note); }
+function choosePrompt(){ const pool=PROMPTS.slice().sort(()=>Math.random()-.5).slice(0,3);
+  show(`<h1>What will you write about?</h1><div class="sub">挑一张题目卡，或者自由写</div>
+   <div class="prompts">${pool.map(p=>`<button data-p="${PROMPTS.indexOf(p)}"><span>${esc(p[1])}<small>${esc(p[2])}</small></span></button>`).join('')}
+   <button data-p="-1"><span class="e"></span><span>Free write<small>想写什么就写什么</small></span></button>
+   <button data-p="-2" style="background:#F6F1FF"><span class="e"></span><span>Show me other cards<small>换一组</small></span></button></div>`);
+  $$('[data-p]').forEach(b=>b.onclick=()=>{ const k=+b.dataset.p; if(k===-2) return choosePrompt(); entry.prompt=k; write(); }); }
+function write(){ const p=entry.prompt>=0?PROMPTS[entry.prompt]:null;
+  show(`<h1 style="font-size:26px">${p?esc(p[1]):'Free write'}</h1>${p?`<div class="sub">${esc(p[2])}</div>`:'<div class="sub">想写什么就写什么</div>'}
+   <div class="paper"><textarea id="tx" spellcheck="false" autocorrect="off" autocapitalize="sentences" placeholder="${p?esc(p[1]):'Dear Diary,'}"></textarea></div>
+   <div class="starters">Stuck? ${STARTERS.map(s=>`<button data-s="${esc(s)}">${esc(s)}…</button>`).join('')}</div>
+   <div class="row" style="justify-content:space-between"><span class="sub" id="wc" style="margin:0">0 words</span><button class="big teal" id="done" disabled>I'm done ✓</button></div>`);
+  const tx=$('#tx'); setTimeout(()=>tx.focus(),300); if(p) TC.speak(p[1].replace('…',''),'en-NZ',.9);
+  const upd=()=>{ const n=(tx.value.trim().match(/[A-Za-z0-9'’]+|[一-鿿]/g)||[]).length; $('#wc').textContent=n+(n===1?' word':' words')+(n>=20?'':''); $('#done').disabled=n<1; entry.words=n; };
+  tx.oninput=upd; $$('[data-s]').forEach(b=>b.onclick=()=>{ const s=b.dataset.s; const pre=tx.value && !/\s$/.test(tx.value)?' ':''; tx.value+=pre+s; tx.focus(); upd(); });
+  $('#done').onclick=()=>{ entry.text=tx.value.trim(); share(); }; }
+function share(){ show(`<h1>Well done!</h1><div class="sub">Do you want Mum to read this one? 这篇想给妈妈看吗？</div>
+  <div class="row"><button class="big gold" id="yes">Yes, Mum can read it</button><button class="big white" id="no">Just for me</button></div>`);
+  TC.speakZh('写得真棒！这篇想给妈妈看吗？');
+  $('#yes').onclick=()=>save(true); $('#no').onclick=()=>save(false); }
+async function save(shared){ entry.shared=shared; hideCard();
+  const [tx,ty]=nextStarPoint(); T.diary.push(entry); await TC.saveNow(); T.diary.pop();
+  // star flies to the window
+  const s=document.createElement('div'); s.className='flystar'; s.innerHTML=TC.icon('star'); s.style.left=(innerWidth/2-23)+'px'; s.style.top=(innerHeight/2-23)+'px'; document.body.appendChild(s);
+  await sleep(50); s.style.left=(tx-23)+'px'; s.style.top=(ty-23)+'px'; s.style.transform='scale(.4)'; s.style.opacity='.2';
+  await sleep(1650); s.remove(); T.diary.push(entry); drawSky();
+  const n=T.diary.length, st=consState(n); const finished = st.lit===0;
+  const prev=CONS[(st.idx-1+CONS.length)%CONS.length];
+  if(finished){ show(`<h1>You made a constellation!</h1><div class="sub" style="font-size:22px">你连出了一个「${prev.zh}」${prev.en} constellation！</div><div class="row"><button class="big violet" id="gn">Good night</button></div>`); TC.speakZh(`哇！你连出了一个${prev.zh}！`); }
+  else { show(`<h1>Star number ${n}!</h1><div class="sub" style="font-size:20px">窗外又亮了一颗星。再写 ${STARS_PER-st.lit} 晚，就能连出「${st.cons.zh}」。</div><div class="row"><button class="big violet" id="gn">Good night</button></div>`); TC.speakZh(`窗外又亮了一颗星星。晚安！`); }
+  $('#gn').onclick=goodbye; }
+function showEnvelope(note){ const r=$('#scene'); const e=document.createElement('div'); e.id='env'; e.innerHTML=TC.icon('letter'); e.style.left=PILLOW.x*100+'%'; e.style.top=PILLOW.y*100+'%'; r.appendChild(e);
+  setTimeout(()=>TC.speakZh('枕头边好像有一封信！'),2500);
+  e.onclick=()=>{ e.remove(); note.read=true; TC.save(); const back=card.innerHTML;
+    show(`<h1>A note from Mum</h1><div class="sub">${esc(note.d)}${note.about?` · 回复你 ${esc(note.about)} 的日记`:''}</div><div class="note">${esc(note.text)}</div><div class="row" style="margin-top:16px"><button class="big teal" id="ok">Thank you, Mum</button></div>`);
+    TC.speak(note.text, /[一-鿿]/.test(note.text)?'zh-CN':'en-NZ', .9);
+    $('#ok').onclick=()=>welcome(); }; }
+function openBook(){ const list=T.diary.slice().reverse(); const done=Math.floor(T.diary.length/STARS_PER);
+  show(`<h1>My Diary</h1><div class="sub">${T.diary.length} nights · ${done?TC.L(`已连出 ${CONS.slice(0,Math.min(done,CONS.length)).map(c=>c.zh).join('、')}${done>CONS.length?' ……':''}`,`Constellations: ${CONS.slice(0,Math.min(done,CONS.length)).map(c=>c.en||c.zh).join(', ')}${done>CONS.length?' …':''}`):TC.L('还没连出星座','No constellations yet')}</div>
+   ${list.length?list.map(e=>`<div class="entry"><div class="h">${esc(e.d)} · ${moodHTML(e.mood)} ${MOODS[e.mood]?.[1]||''} · ${e.shared?'给妈妈看':'只给自己'}</div>${e.prompt>=0?`<div style="font-weight:800;margin-bottom:4px">${esc(PROMPTS[e.prompt][1])}</div>`:''}<div class="t">${esc(e.text)}</div></div>`).join(''):'<div class="sub">还没有日记</div>'}
+   <div class="row"><button class="big white" id="bkBack">← Back</button></div>`);
+  $('#bkBack').onclick=()=>DAY?dayWelcome():welcome(); }
+$('#bookBtn').onclick=openBook;
+function goodbye(){ stopMusic(); TC.speakZh('晚安，明天见！'); setTimeout(()=>{ location.href='../小镇.html'; },1400); }
+$('#byeBtn').onclick=goodbye;
+
+/* ---------- daytime: a bright room to read old diary pages and Mum's letters; writing waits for the evening ---------- */
+let DAY=false;
+function dayMode(){ DAY=true; document.body.classList.add('day'); $('#byeBtn').innerHTML=TC.icon('home')+' '+TC.L('回小镇','Back to town'); $('#byeBtn').onclick=()=>location.href='../小镇.html';
+  const pool=T.animals.length?T.animals:[0]; petId=pool[Math.floor((Date.now()/864e5))%pool.length];
+  $('#petName').textContent=TC.L(ANIMALS[petId]?.zh||'',ANIMALS[petId]?.en||''); petSetup();
+  place(); dayWelcome(); const note=T.notes.find(n=>!n.read); if(note) showEnvelope(note); }
+function dayWelcome(){ const name=T.childName||TC.L('小朋友','friend'); const letters=(T.notes||[]).length;
+  show(`<h1>${TC.L(`${esc(name)} 的小屋`,`${esc(name)}'s room`)}</h1><div class="sub">${TC.L('可以翻翻以前的日记和妈妈的信。今天的游戏时间用完以后，就可以来写新的日记啦。','You can read your old diary and Mum\'s letters. When today\'s play time is used up, come back and write a new page.')}</div>
+   <div class="row"><button class="big white" id="dBook">${TC.L('翻翻我的日记','Read my diary')}</button>${letters?`<button class="big gold" id="dMail">${TC.L('妈妈的信','Letters from Mum')}</button>`:''}<button class="big teal" id="dTown">${TC.L('回小镇','Back to town')}</button></div>`);
+  $('#dBook').onclick=openBook; $('#dTown').onclick=()=>location.href='../小镇.html'; if($('#dMail')) $('#dMail').onclick=openLetters;
+  TC.speak(TC.L('欢迎回到小屋！可以看看以前的日记哦。','Welcome to your room! You can read your old diary.'), TC.lang()==='en'?'en-NZ':'zh-CN'); }
+function openLetters(){ const list=(T.notes||[]).slice().reverse();
+  show(`<h1>${TC.L('妈妈的信','Letters from Mum')}</h1>${list.map(n=>`<div class="entry"><div class="h">${esc(n.d)}${n.about?` · ${TC.L('回复你','reply to your diary on')} ${esc(n.about)}`:''}</div><div class="t">${esc(n.text)}</div></div>`).join('')}
+   <div class="row"><button class="big white" id="lBack">${TC.L('返回','Back')}</button></div>`); $('#lBack').onclick=dayWelcome; }
+
+/* ---------- boot ---------- */
+let petId=0;
+(async()=>{ T=await TC.ready; T.diary=T.diary||[]; T.notes=T.notes||[];
+  const h=new Date().getHours()*60+new Date().getMinutes();
+  if(!TC.diaryOpen()){ dayMode(); return; }
+  const pool=T.animals.length?T.animals:[0]; petId=pool[Math.floor((Date.now()/864e5))%pool.length];
+  $('#petName').textContent=TC.L(ANIMALS[petId]?.zh||'',ANIMALS[petId]?.en||''); petSetup();
+  place(); twinkle(); welcome();
+  setTimeout(()=>{ show(`<h1>It's getting late</h1><div class="sub">时间不早啦，该睡觉了。日记明天再继续写吧！</div><div class="row"><button class="big violet" id="gn2">Good night</button></div>`); $('#gn2').onclick=goodbye; }, 20*60*1000);
+})();
+</script>
+</body>
+</html>

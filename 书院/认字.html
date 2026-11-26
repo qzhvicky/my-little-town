@@ -1,0 +1,414 @@
+<!DOCTYPE html>
+<html lang="zh-CN" data-town-root=".." data-mus-pos="left">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>书院 · 书墙</title>
+<link rel="icon" href="../assets/icon.png">
+<style>
+:root{--ink:#3B2A22;--soft:#8C7766;--red:#D9473B;--red-d:#B5352B;--gold:#F2B33D;--paper:#FFF7EA;--line:#EFDDC4;
+ --font:ui-rounded,"SF Pro Rounded","PingFang SC",system-ui,sans-serif;--kai:"Kaiti SC","STKaiti","KaiTi","楷体",serif}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+html,body{margin:0;height:100%;font-family:var(--font);color:var(--ink);background:var(--paper);user-select:none;-webkit-user-select:none;overflow:hidden}
+body::before{content:'';position:fixed;inset:0;z-index:-1;background:radial-gradient(circle at 10% 8%,#FFE3D6 0 90px,transparent 91px),radial-gradient(circle at 92% 90%,#FFEFC9 0 120px,transparent 121px),radial-gradient(circle at 88% 12%,#F8E1E1 0 70px,transparent 71px)}
+button{font-family:inherit;border:none;cursor:pointer;color:inherit}
+.screen{position:fixed;inset:0;display:none;flex-direction:column;padding:18px 26px;overflow-y:auto}
+.screen.on{display:flex;animation:fade .3s}
+@keyframes fade{from{opacity:0;transform:translateY(6px)}}
+.top{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.chip{display:inline-flex;align-items:center;gap:6px;background:#fff;border-radius:999px;padding:9px 18px;font-weight:900;font-size:18px;box-shadow:0 3px 0 var(--line)}
+.grow{flex:1}
+.big{font-size:24px;font-weight:900;border-radius:999px;padding:16px 36px;box-shadow:0 6px 0 rgba(0,0,0,.14);transition:transform .08s}
+.big:active{transform:translateY(4px);box-shadow:0 2px 0 rgba(0,0,0,.14)}
+.red{background:var(--red);color:#fff}.gold{background:var(--gold)}.white{background:#fff}.teal{background:#3FBFAD;color:#fff}
+.center{display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px}
+h1{font-size:42px;margin:0;font-weight:900}
+.muted{color:var(--soft)}
+.lantern{font-size:56px;animation:sway 3s ease-in-out infinite;display:inline-block;transform-origin:top center}
+@keyframes sway{50%{transform:rotate(6deg)}}
+.count{font-size:96px;font-weight:900;color:var(--red);line-height:1;font-family:var(--kai)}
+.bar{width:min(520px,80vw);height:22px;border-radius:999px;background:#fff;box-shadow:inset 0 2px 0 var(--line);overflow:hidden}
+.bar b{display:block;height:100%;background:linear-gradient(90deg,var(--gold),var(--red));border-radius:999px;transition:width .8s}
+.hanzi{font-family:var(--kai);font-weight:700}
+.tiles{display:grid;grid-template-columns:repeat(4,1fr);gap:18px;width:min(760px,92vw)}
+.tile{aspect-ratio:1;background:#fff;border-radius:28px;font-family:var(--kai);font-size:min(13vw,110px);display:flex;align-items:center;justify-content:center;box-shadow:0 7px 0 var(--line);transition:transform .15s,background .2s}
+.tile:hover{transform:translateY(-4px)}
+.tile.right{background:#D8F3EE;box-shadow:0 7px 0 #9FDCD2}
+.tile.wrong{background:#FFE0D6;animation:shake .4s}
+@keyframes shake{25%{transform:translateX(-8px)}75%{transform:translateX(8px)}}
+.speak{width:120px;height:120px;border-radius:50%;background:var(--red);color:#fff;font-size:54px;box-shadow:0 8px 0 var(--red-d)}
+.speak.talk{animation:pulse 1s infinite}
+@keyframes pulse{50%{box-shadow:0 8px 0 var(--red-d),0 0 0 18px rgba(217,71,59,.15)}}
+.introcard{background:#fff;border-radius:36px;padding:26px 50px;box-shadow:0 10px 0 var(--line);display:flex;gap:40px;align-items:center}
+.introcard .ch{font-family:var(--kai);font-size:200px;line-height:1;color:var(--ink);background:repeating-linear-gradient(0deg,transparent 0 49.5%,#F6D7D0 49.5% 50.5%,transparent 50.5%),repeating-linear-gradient(90deg,transparent 0 49.5%,#F6D7D0 49.5% 50.5%,transparent 50.5%);border:4px solid #F0B6AA;border-radius:18px;padding:10px 20px}
+.introcard .em{font-size:110px}
+.word{font-family:var(--kai);font-size:54px}
+.word b{color:var(--red)}
+.dots{display:flex;gap:8px;justify-content:center}.dots i{width:14px;height:14px;border-radius:50%;background:#EAD9C2}.dots i.ok{background:#3FBFAD}.dots i.cur{background:var(--red)}
+.mem{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:min(760px,92vw)}
+.card{aspect-ratio:1;border-radius:22px;perspective:600px;cursor:pointer}
+.card .in{position:relative;width:100%;height:100%;transition:transform .45s;transform-style:preserve-3d}
+.card.flip .in{transform:rotateY(180deg)}
+.card .f,.card .b{position:absolute;inset:0;border-radius:22px;display:flex;align-items:center;justify-content:center;backface-visibility:hidden;box-shadow:0 6px 0 var(--line)}
+.card .f{background:linear-gradient(135deg,#E8574B,#C8392F);color:#FFD98A;font-size:46px}
+.card .b{background:#fff;transform:rotateY(180deg);font-family:var(--kai);font-size:64px}
+.card .b.e{font-size:60px;font-family:var(--font)}
+.card .b small{font-size:26px}
+.card.done .b{background:#D8F3EE}
+.shelf{display:grid;grid-template-columns:repeat(auto-fill,minmax(220px,1fr));gap:18px}
+.book{background:#fff;border-radius:22px;padding:18px;box-shadow:0 6px 0 var(--line);cursor:pointer;position:relative}
+.book .t{font-family:var(--kai);font-size:30px;font-weight:700}
+.book.locked{opacity:.55;cursor:default}
+.book .badge{position:absolute;right:12px;top:10px;font-size:26px}
+.reader{background:#fff;border-radius:28px;padding:30px 40px;box-shadow:0 8px 0 var(--line);max-width:1000px;margin:0 auto;line-height:2.1}
+.reader span{font-family:var(--kai);font-size:44px;cursor:pointer;border-radius:10px;padding:0 2px;transition:background .2s}
+.reader span:hover{background:#FFF0D6}
+.reader span.unk{background:#FFD9CF;box-shadow:0 0 0 3px #F2A38F}
+.reader span.new{color:var(--red)}
+.reader span.p{cursor:default}
+.burst{position:fixed;pointer-events:none;font-size:30px;z-index:200;animation:fly 1.2s ease-out forwards}
+@keyframes fly{to{transform:translate(var(--dx),var(--dy)) rotate(360deg);opacity:0}}
+.pc{background:#fff;border-radius:18px;padding:18px;margin-bottom:14px;box-shadow:0 3px 0 var(--line);user-select:text;-webkit-user-select:text}
+.pc h3{margin:0 0 10px}
+.cgrid{display:flex;flex-wrap:wrap;gap:6px}
+.cgrid span{font-family:var(--kai);font-size:26px;width:44px;height:44px;display:flex;align-items:center;justify-content:center;border-radius:10px;background:#F2ECE4;cursor:pointer}
+.cgrid span.k{background:#CFF0E8}.cgrid span.l{background:#FFE9B5}
+.btn{padding:10px 16px;border-radius:12px;background:var(--ink);color:#fff;font-weight:700;font-size:15px}
+.btn.ghost{background:#F1EAE2;color:var(--ink)}
+textarea{width:100%;min-height:110px;font-size:18px;padding:10px;border-radius:12px;border:2px solid #EDE3D8;font-family:var(--font)}
+
+/* ====== 书院氛围皮肤 ====== */
+html,body{background:#E9D5B5 url(../assets/shuyuan_bg.jpg) center/cover no-repeat fixed}
+body::before{background:radial-gradient(ellipse at 50% 45%,rgba(255,248,234,.0) 30%,rgba(120,70,30,.18) 100%)}
+.screen{padding:14px 22px}
+.panel{background:linear-gradient(#FFFBF2,#FFF4E2);border-radius:26px;box-shadow:0 0 0 3px #E8C99B,0 0 0 9px rgba(255,250,240,.75),0 18px 50px rgba(90,50,20,.28);position:relative}
+.panel::before,.panel::after{content:'';position:absolute;left:18px;right:18px;height:10px;border-radius:6px;background:linear-gradient(#B47A3C,#8B5A2B);box-shadow:0 2px 4px rgba(0,0,0,.2)}
+.panel::before{top:-14px}.panel::after{bottom:-14px}
+#homePanel{width:min(620px,58vw);padding:34px 30px 30px;margin:0 auto}
+.chip{background:rgba(255,250,240,.95);box-shadow:0 3px 0 #D9B88C}
+.seal-title{display:inline-flex;align-items:center;justify-content:center;background:#C8372D;color:#FFF3DC;font-family:var(--kai);font-size:46px;font-weight:700;letter-spacing:12px;padding:8px 18px 8px 30px;border-radius:12px;box-shadow:inset 0 0 0 4px #FFF3DC,inset 0 0 0 6px #C8372D,0 6px 0 #8F241C}
+.count{text-shadow:0 3px 0 #F6D9B8}
+.big.red{background:linear-gradient(#E0503F,#C33A2E);box-shadow:0 6px 0 #8F241C}
+.big.gold{background:linear-gradient(#F7C95C,#E9A92C);box-shadow:0 6px 0 #A9741A}
+.big.white{background:#FFFBF2;box-shadow:0 6px 0 #D9B88C}
+/* scrolls on the wall */
+.wallscroll{position:fixed;writing-mode:vertical-rl;font-family:var(--kai);color:#5A3A1E;font-weight:700;letter-spacing:.25em;text-align:center;pointer-events:none;z-index:1;display:flex;align-items:center;justify-content:center}
+/* panda */
+#panda{position:fixed;right:1.5vw;bottom:0;height:min(46vh,430px);z-index:5;filter:drop-shadow(0 8px 10px rgba(60,30,10,.3));transition:transform .3s;cursor:pointer}
+#panda:hover{transform:translateY(-6px) rotate(-2deg)}
+#pandaSay{position:fixed;right:calc(1.5vw + min(30vh,280px));bottom:calc(min(46vh,430px) - 40px);z-index:6;background:#FFFBF2;border-radius:20px;padding:12px 18px;font-size:19px;font-weight:800;max-width:300px;box-shadow:0 0 0 3px #E8C99B,0 8px 20px rgba(90,50,20,.2);display:none}
+#pandaSay::after{content:'';position:absolute;right:-12px;bottom:18px;border:12px solid transparent;border-left-color:#FFFBF2;border-right:0}
+#pandaSay.on{display:block;animation:fade .3s}
+/* stage panel */
+#stageWrap{width:min(900px,70vw);margin:0 auto;padding:30px 26px 34px}
+.tile{background:#FFFCF4;border-radius:14px;box-shadow:inset 0 0 0 3px #E2B9A0,inset 0 0 0 6px #FFFCF4,inset 0 0 0 7px #F0CDBE,0 6px 0 #D9B88C;position:relative;overflow:visible}
+.tile.right{background:#FFF5E8}
+.tile.right::after{content:'对';position:absolute;right:-10px;top:-12px;width:54px;height:54px;border-radius:10px;background:#C8372D;color:#FFF3DC;font-size:32px;display:flex;align-items:center;justify-content:center;transform:rotate(-12deg);box-shadow:inset 0 0 0 3px #FFF3DC;animation:stamp .35s cubic-bezier(.3,1.6,.5,1)}
+@keyframes stamp{from{transform:rotate(-12deg) scale(2.2);opacity:0}}
+.speak{background:radial-gradient(circle at 35% 30%,#E85A48,#B8302A);box-shadow:inset 0 0 0 5px rgba(255,243,220,.85),0 8px 0 #8F241C}
+.introcard{position:relative;background:#FFFCF4;border-radius:6px;padding:36px 56px;box-shadow:0 10px 24px rgba(90,50,20,.25)}
+.introcard::before,.introcard::after{content:'';position:absolute;left:-16px;right:-16px;height:18px;border-radius:9px;background:linear-gradient(#B47A3C,#7A4A20)}
+.introcard::before{top:-12px}.introcard::after{bottom:-12px}
+.introcard .ch{background-color:#FFFDF8}
+.card .f{background:radial-gradient(circle at 50% 40%,#E4503F,#B32F26);box-shadow:inset 0 0 0 4px #F2C46A,inset 0 0 0 7px #B32F26,0 6px 0 #8F241C;color:#F7D27A}
+.card .b{background:#FFFCF4;box-shadow:inset 0 0 0 3px #E2B9A0,0 6px 0 #D9B88C}
+/* thread-bound books */
+.shelf{grid-template-columns:repeat(auto-fill,minmax(150px,1fr));gap:22px}
+.book{background:linear-gradient(90deg,#2F4E7A 0 14px,#3D6497 14px);color:#fff;border-radius:6px 10px 10px 6px;padding:0;height:240px;box-shadow:4px 6px 0 #1E3352,0 10px 20px rgba(0,0,0,.2);display:flex;flex-direction:column;align-items:center}
+.book::before{content:'';position:absolute;left:4px;top:14px;bottom:14px;width:6px;background:repeating-linear-gradient(#E9DCC0 0 3px,transparent 3px 34px)}
+.book .t{writing-mode:vertical-rl;background:#FFF8E8;color:#3B2A22;margin-top:16px;padding:10px 5px;font-size:21px;line-height:1.1;border:2px solid #C9A877;white-space:nowrap}
+.book .muted{color:#E6EEF8!important;font-size:12px;padding:6px 10px;text-align:center;margin-top:auto;margin-bottom:8px}
+.book .muted .hanzi{color:#FFD1C4!important;font-size:16px!important}
+.book.locked{filter:grayscale(.6);opacity:.75}
+.book.read{background:linear-gradient(90deg,#8C2A22 0 14px,#B23A2E 14px);box-shadow:4px 6px 0 #5E1B16,0 10px 20px rgba(0,0,0,.2)}
+#shelfPanel,#readPanel{width:min(1000px,78vw);margin:10px auto;padding:26px}
+.reader{background:transparent;box-shadow:none;padding:10px 20px}
+
+/* ====== 书墙 (book wall) ====== */
+#wallPanel{width:min(1060px,74vw);margin:6px auto 0 max(20px,4vw);padding:22px 30px 26px}
+.wall{display:grid;grid-template-columns:repeat(3,1fr);gap:26px 30px}
+.cover{position:relative;border-radius:8px 14px 14px 8px;overflow:hidden;background:#F4EAD8;aspect-ratio:4/3.25;cursor:pointer;
+  box-shadow:inset 10px 0 0 #8B5A2B,inset 13px 0 0 #C79A62,6px 8px 0 #A87B4B,0 14px 24px rgba(70,40,15,.28);transition:transform .2s}
+.cover:hover{transform:translateY(-5px) rotate(-.6deg)}
+.cover img{position:absolute;left:13px;top:0;width:calc(100% - 13px);height:100%;object-fit:cover;filter:grayscale(1) sepia(.25) brightness(1.12) contrast(.8);opacity:.55;transition:filter 1.6s,opacity 1.6s}
+.cover.passed img{filter:none;opacity:1}
+.cover .label{position:absolute;left:50%;bottom:10px;transform:translateX(-50%);background:#FFF8E8;border:2px solid #C9A877;border-radius:6px;padding:4px 16px;font-family:var(--kai);font-size:26px;font-weight:700;white-space:nowrap;color:#3B2A22;box-shadow:0 3px 0 rgba(0,0,0,.12)}
+.cover .no{position:absolute;left:24px;top:10px;background:#C8372D;color:#FFF3DC;font-family:var(--kai);font-size:18px;padding:2px 10px;border-radius:6px;box-shadow:inset 0 0 0 2px #FFF3DC}
+.cover .lv{position:absolute;right:10px;top:10px;background:rgba(255,248,232,.9);font-size:13px;font-weight:800;padding:3px 9px;border-radius:99px;color:#8C7766}
+.cover .lock{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:58px;background:rgba(240,228,208,.35)}
+.cover.locked{cursor:default}
+.cover.locked .label{color:#9C8B7B}
+.cover.current{animation:glow 2.2s ease-in-out infinite}
+@keyframes glow{50%{box-shadow:inset 10px 0 0 #8B5A2B,inset 13px 0 0 #C79A62,6px 8px 0 #A87B4B,0 0 0 8px rgba(242,179,61,.55),0 14px 24px rgba(70,40,15,.28)}}
+.cover .star{position:absolute;right:10px;bottom:10px;font-size:30px}
+.cover.colorize img{animation:colorize 2.4s ease forwards}
+@keyframes colorize{from{filter:grayscale(1) sepia(.25) brightness(1.12) contrast(.8);opacity:.55}to{filter:none;opacity:1}}
+.wallhead{display:flex;align-items:center;gap:14px;margin-bottom:18px}
+/* reader */
+#readPanel{width:min(1100px,84vw);margin:4px auto;padding:22px 30px;display:grid;grid-template-columns:42% 1fr;gap:28px;align-items:start}
+#readPic{width:100%;border-radius:14px;box-shadow:0 0 0 6px #fff,0 0 0 8px #E8C99B,0 10px 20px rgba(70,40,15,.2)}
+.reader{padding:0;line-height:2.15}
+.reader .ttl{text-align:center;margin-bottom:6px}
+.reader .ttl span{font-size:46px;font-weight:700}
+.reader span{font-size:40px}
+.reader span.unk{background:#FFD9CF;box-shadow:0 0 0 3px #F2A38F}
+.reader span.unk::after{content:''}
+.reader span.hl{background:#FFF0B8;box-shadow:0 0 0 3px #F2C94C}
+.tip{display:inline-block;background:rgba(255,250,240,.95);border-radius:999px;padding:8px 18px;font-size:17px;font-weight:800;box-shadow:0 3px 0 #D9B88C}
+.btnrow{display:flex;gap:14px;justify-content:center;flex-wrap:wrap;margin:18px 0 8px}
+.ctx{font-family:var(--kai);font-size:30px;max-width:640px;line-height:1.6;color:#5A4636}
+.ctx b{color:var(--red);font-size:38px}
+.result-cover{width:340px;border-radius:12px;box-shadow:0 0 0 6px #fff,0 0 0 8px #E8C99B,0 10px 20px rgba(70,40,15,.25)}
+.result-cover.gray{filter:grayscale(1) sepia(.25) brightness(1.12) contrast(.8);opacity:.6}
+.result-cover.go{animation:colorize 2.6s ease forwards}
+</style>
+</head>
+<body>
+<!-- HOME: book wall -->
+<section class="screen" id="home">
+  <div class="top"><button class="chip" id="toTown"><img class="tci" src="../assets/icons/home.png" alt=""> 回小镇</button><span class="chip" id="coins"></span><span class="chip" id="knownChip">我认识 0 个字</span><span class="grow"></span><button class="chip" id="toParent"><img class="tci" src="../assets/icons/lock.png" alt=""></button></div>
+  <div class="panel" id="wallPanel">
+    <div class="wallhead"><div class="seal-title" style="font-size:34px;letter-spacing:8px;padding:6px 12px 6px 20px">书院</div>
+      <div><div style="font-size:22px;font-weight:900">书墙 · 一本一本读下去</div><div class="muted" id="wallSub" style="font-weight:700"></div></div>
+      <span class="grow"></span><button class="big gold" id="reviewBtn" style="font-size:19px;padding:11px 22px;display:none">复习</button></div>
+    <div class="wall" id="wall"></div>
+    <div id="taskLine" style="font-size:17px;font-weight:800;text-align:center;margin-top:16px"></div>
+  </div>
+</section>
+<!-- READ: look through the book, tick unknown chars -->
+<section class="screen" id="read">
+  <div class="top"><button class="chip" id="readBack">← 书墙</button><span class="grow"></span><span class="tip" id="readTip">先听一遍、看一遍。<b>不认识的字点一下</b>，它会变红，我们待会儿一起学。</span><span class="grow"></span><button class="chip" id="listenBtn">听故事</button></div>
+  <div class="panel" id="readPanel"><img id="readPic" alt=""><div class="reader" id="readerBox"></div></div>
+  <div class="btnrow"><button class="big white" id="allKnow">我都认识 → 直接测试</button><button class="big red" id="markDone">标好了，去学这些字 →</button></div>
+</section>
+<!-- PLAY (learn / test stage) -->
+<section class="screen" id="play">
+  <div class="top"><button class="chip" id="quit">← 书墙</button><span class="grow"></span><div class="dots" id="dots"></div><span class="grow"></span><span class="chip" id="stepName"></span></div>
+  <div class="center" style="flex:1"><div class="panel center" id="stageWrap" style="gap:18px"><div class="center" id="stage" style="gap:18px;width:100%"></div></div></div>
+</section>
+<!-- PARENT -->
+<section class="screen" id="parent" style="background:#FBF8F4">
+  <div class="top"><h1 style="font-size:28px">书院 · 家长</h1><span class="grow"></span><button class="btn ghost" id="pBack">返回</button></div>
+  <div id="pBody"></div>
+</section>
+
+<div class="wallscroll" id="scrollL"></div><div class="wallscroll" id="scrollR"></div>
+<img id="panda" src="../assets/panda.webp" alt="熊猫先生"><div id="pandaSay"></div>
+<script>window.I18N_SKIP=".reader,#readerBox,.tile,.introcard .ch,.introcard .word,.ctx,.cover .label,.mem .b,.hanzi,.wallscroll,.seal-title,.cgrid,.result-cover";</script>
+<script src="chars.js"></script>
+<script src="books.js"></script>
+<script src="../assets/animals.js"></script>
+<script src="../town-core.js"></script>
+<script>
+"use strict";
+const TC=window.TownCore; let T, Z;
+const $=s=>document.querySelector(s), $$=s=>[...document.querySelectorAll(s)];
+const esc=s=>String(s??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const sleep=ms=>new Promise(r=>setTimeout(r,ms));
+const shuffle=a=>{ for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; };
+const isHan=ch=>/[一-鿿]/.test(ch);
+const INTERVAL={1:1,2:3,3:7,4:14,5:30}, MASTER=6, MAX_REVIEW=8;
+const addDays=(d,n)=>{ const [y,m,dd]=d.split('-').map(Number); return TC.today(new Date(y,m-1,dd+n)); };
+const IMG=b=>`../assets/books/${b.img}.webp`;
+
+/* ---------- data ---------- */
+function info(c){ const w=BOOK_WORDS[c]; if(w) return {c,w:w.w,e:w.e}; return CHAR_BANK.find(b=>b.c===c) || {c,w:c,e:''}; }
+function st(c){ return Z.chars[c]||(Z.chars[c]={box:0,seen:0,ok:0,wrong:0,known:false}); }
+function isKnown(c){ return !!Z.chars[c]?.known; }
+function knownCount(){ return Object.values(Z.chars).filter(s=>s.known).length; }
+function markKnown(c,how){ const s=st(c); s.known=true; s.box=MASTER; s.due=addDays(TC.today(),60); s.how=s.how||how; s.knownOn=s.knownOn||TC.today(); }
+function learning(c,ok){ const s=st(c); s.known=false; s.seen=Math.max(1,s.seen); s.box=ok?2:1; s.due=addDays(TC.today(),ok?INTERVAL[2]:1); s.learnedOn=s.learnedOn||TC.today(); }
+function result(c,ok){ const s=st(c), t=TC.today(); s.seen++; s.last=t;
+  if(ok){ s.ok++; if(s.known){ s.due=addDays(t,90); } else { s.box=Math.min(s.box+1,MASTER); if(s.box>=MASTER) markKnown(c,'review'); else s.due=addDays(t,INTERVAL[s.box]); } }
+  else { s.wrong++; s.known=false; s.box=1; s.due=addDays(t,1); } }
+const LV_EN={'一年级上':'Grade 1 · A','一年级下':'Grade 1 · B','二年级上':'Grade 2 · A','二年级下':'Grade 2 · B','三年级上':'Grade 3 · A','三年级下':'Grade 3 · B'};
+function bookChars(b){ return [...new Set([...(b.t+b.s)].filter(isHan))]; }
+function bk(id){ return Z.books[id]||(Z.books[id]={}); }
+function passed(b){ return !!Z.books[b.id]?.passed; }
+function unlocked(b){ const i=BOOKS.indexOf(b); return i===0 || passed(BOOKS[i-1]); }
+function currentBook(){ return BOOKS.find(b=>unlocked(b)&&!passed(b)); }
+function sentenceOf(b,c){ const parts=b.s.split(/(?<=[。！？])/); return (parts.find(p=>p.includes(c))||b.t).replace(/[“”]/g,''); }
+
+/* ---------- audio: Mum's recordings first, computer voice as fallback ---------- */
+const audioMiss=new Set(); let curAudio=null;
+function stopAudio(){ try{ curAudio?.pause(); }catch(e){} curAudio=null; speechSynthesis.cancel(); }
+function tryAudio(srcs){ return new Promise(res=>{ const next=i=>{ if(i>=srcs.length) return res(false); const src=srcs[i]; if(audioMiss.has(src)) return next(i+1);
+    const a=new Audio(src); let started=false; a.onerror=()=>{ audioMiss.add(src); if(!started) next(i+1); }; a.onended=()=>res(true);
+    a.play().then(()=>{ started=true; curAudio=a; }).catch(()=>{ audioMiss.add(src); next(i+1); }); }; next(0); }); }
+async function sayChar(c){ stopAudio(); const ok=await tryAudio([`录音/字/${c}.m4a`,`录音/字/${c}.mp3`]); if(ok) return; const b=info(c); return TC.speakZh(b.w&&b.w!==c?(b.w.endsWith(c)?`${c}，${b.w}`:`${c}，${b.w}的${c}`):c,{keepZh:true}); }
+function say(t){ return TC.speakZh(t); }
+async function playStory(b){ stopAudio(); $('#listenBtn').textContent='正在读…';
+  const ok=await tryAudio([`录音/第${b.id}本.m4a`,`录音/第${b.id}本.mp3`]);
+  if(!ok){ await TC.speak(b.t+'。'+b.s,'zh-CN',0.8,{keepZh:true}); }
+  $('#listenBtn').textContent='听故事'; }
+
+/* ---------- nav ---------- */
+let go=function(id){ $$('.screen').forEach(s=>s.classList.remove('on')); $('#'+id).classList.add('on'); if(id==='home') renderWall(); };
+$('#toTown').onclick=()=>{ location.href='../小镇.html'; };
+$('#toParent').onclick=async()=>{ if(await TC.askPin()) openParent(); };
+$('#pBack').onclick=()=>go('home');
+$('#quit').onclick=()=>{ stopAudio(); go('home'); };
+$('#readBack').onclick=()=>{ stopAudio(); go('home'); };
+function burst(x,y,em=['star','sparkle','lantern'],n=10){ for(let i=0;i<n;i++){ const b=document.createElement('div'); b.className='burst'; b.innerHTML=TC.ico(em[i%em.length]); b.style.left=x+'px'; b.style.top=y+'px'; const a=Math.random()*Math.PI*2,d=80+Math.random()*130; b.style.setProperty('--dx',Math.cos(a)*d+'px'); b.style.setProperty('--dy',Math.sin(a)*d-60+'px'); document.body.appendChild(b); setTimeout(()=>b.remove(),1300);} }
+function setDots(n,i){ $('#dots').innerHTML=Array.from({length:n},(_,k)=>`<i class="${k<i?'ok':k===i?'cur':''}"></i>`).join(''); }
+function dueChars(){ const t=TC.today(); return Object.entries(Z.chars).filter(([c,s])=>!s.known&&s.seen>0&&s.due&&s.due<=t).sort((a,b)=>a[1].due<b[1].due?-1:1).map(([c])=>c); }
+
+/* ---------- book wall ---------- */
+function renderWall(justPassed){ $('#coins').innerHTML=TC.icon('coin')+' '+TC.fmt(T.coins); $('#knownChip').textContent=`我认识 ${knownCount()} 个字`;
+  const cur=currentBook(), done=BOOKS.filter(passed).length;
+  $('#wallSub').textContent= cur?`已读通 ${done} / ${BOOKS.length} 本 · 现在读第 ${cur.id} 本《${cur.t}》`:`${BOOKS.length} 本全部读通啦！新书很快就到～`;
+  $('#wall').innerHTML=BOOKS.map(b=>{ const p=passed(b), u=unlocked(b), c=b===cur;
+    return `<div class="cover ${p?'passed':''} ${u?'':'locked'} ${c?'current':''} ${justPassed===b.id?'colorize':''}" data-id="${b.id}">
+      <img src="${IMG(b)}" alt="" onerror="this.style.display='none'"><span class="no">${TC.L(`第${['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'][b.id-1]||b.id}本`,`Book ${b.id}`)}</span><span class="lv">${TC.L(b.lv,LV_EN[b.lv]||b.lv)}</span>
+      ${u?'':'<div class="lock">'+TC.icon('lock','big')+'</div>'}<div class="label">${esc(b.t)}</div>${p?'<div class="star">'+TC.icon('star','big')+'</div>':''}</div>`; }).join('');
+  $$('.cover').forEach(el=>el.onclick=()=>{ const b=BOOKS.find(x=>x.id===+el.dataset.id); if(!unlocked(b)){ panda('先把前面那本书读通，这本才会打开哦！',true); return; } openBook(b); });
+  const due=dueChars().length; $('#reviewBtn').style.display=due?'':'none'; $('#reviewBtn').textContent=`复习 ${Math.min(due,MAX_REVIEW)} 个字`;
+  const tk=TC.tasksToday().find(t=>t.game==='chinese'); $('#taskLine').textContent= tk? (tk.done>=tk.need?'今天的书院任务完成啦！':`今日任务：读通一本书、复习或重读一次（已完成 ${tk.done}/${tk.need}）`):''; }
+
+/* ---------- reading + ticking ---------- */
+let curBook=null;
+function openBook(b){ if(TC.guard()) return; curBook=b; stopAudio();
+  const fmt=str=>[...str].map(ch=>isHan(ch)?`<span data-c="${ch}">${ch}</span>`:`<span class="p">${esc(ch)}</span>`).join('');
+  $('#readPic').src=IMG(b); $('#readerBox').innerHTML=`<div class="ttl">${fmt(b.t)}</div><div>${fmt(b.s)}</div>`;
+  $$('#readerBox span[data-c]').forEach(sp=>sp.onclick=()=>{ const c=sp.dataset.c, on=!sp.classList.contains('unk'); $$(`#readerBox span[data-c="${c}"]`).forEach(x=>x.classList.toggle('unk',on)); if(on) sayChar(c); updateMarkBtn(); });
+  const p=passed(b); $('#allKnow').textContent=p?'✓ 读完啦':'我都认识 → 直接测试';
+  $('#readTip').innerHTML=p?'这本书你已经读通啦，再读一遍吧！<b>忘了的字点一下</b>，我会帮你再记一记。':'先听一遍、看一遍。<b>不认识的字点一下</b>，它会变红，我们待会儿一起学。';
+  updateMarkBtn(); go('read'); setTimeout(()=>TC.speakZh(`《${b.t}》`,{keepZh:true}),300); }
+function marked(){ return [...new Set($$('#readerBox span.unk').map(x=>x.dataset.c))]; }
+function updateMarkBtn(){ const n=marked().length; const btn=$('#markDone'); btn.style.display=n?'':'none'; btn.textContent=`标好了，去学这 ${n} 个字 →`; $('#allKnow').style.display=n?'none':''; }
+$('#listenBtn').onclick=()=>playStory(curBook);
+$('#allKnow').onclick=()=>{ stopAudio(); if(passed(curBook)) return rereadDone([]); startTest(curBook,[],true); };
+$('#markDone').onclick=()=>{ stopAudio(); const m=marked(); if(passed(curBook)) return rereadDone(m); learnThenTest(curBook,m); };
+
+/* ---------- mini-games ---------- */
+function distractors(c,n=3,pool0=[]){ const pool=[...new Set(pool0.concat(CHAR_BANK.map(b=>b.c)))].filter(x=>x!==c);
+  const near=shuffle(pool0.filter(x=>x!==c)).slice(0,2); const rest=shuffle(pool.filter(x=>!near.includes(x))); return near.concat(rest).slice(0,n); }
+function listenChoose(c,{label='听一听，是哪个字？',allowRetry=true,pool=[]}={}){ window.__target=c; return new Promise(async res=>{ let first=true; const opts=shuffle([c,...distractors(c,3,pool)]);
+  $('#stage').innerHTML=`<div style="font-size:24px;font-weight:900">${label}</div><button class="speak" id="sp"><img class="tci" src="../assets/icons/speaker.png" alt=""></button><div class="tiles">${opts.map(o=>`<button class="tile" data-o="${o}">${o}</button>`).join('')}</div><button class="white big" id="dunno" style="font-size:18px;padding:10px 22px">不知道</button>`;
+  const play=async()=>{ $('#sp').classList.add('talk'); await sayChar(c); $('#sp')?.classList.remove('talk'); };
+  $('#sp').onclick=play; setTimeout(play,250);
+  $('#dunno').onclick=async()=>{ first=false; $(`.tile[data-o="${c}"]`).classList.add('right'); await sayChar(c); await sleep(500); res(false); };
+  $$('.tile').forEach(t=>t.onclick=async e=>{ if(t.dataset.o===c){ t.classList.add('right'); burst(e.clientX,e.clientY); await sleep(650); res(first); }
+    else { first=false; t.classList.add('wrong'); setTimeout(()=>t.classList.remove('wrong'),400); if(!allowRetry){ $(`.tile[data-o="${c}"]`).classList.add('right'); await sayChar(c); await sleep(800); res(false); } } }); }); }
+function intro(c,b){ return new Promise(res=>{ const x=info(c); $('#stepName').textContent='学新字';
+  const w=esc(x.w).replace(c,`<b>${c}</b>`), sen=esc(sentenceOf(b,c)).split(c).join(`<b>${c}</b>`);
+  $('#stage').innerHTML=`<div class="introcard"><div class="ch">${c}</div><div class="center" style="gap:10px">${x.e?`<div class="em">${x.e}</div>`:''}<div class="word">${w}</div></div></div>
+   <div class="ctx">${sen}</div>
+   <div style="display:flex;gap:14px"><button class="big white" id="again">再听一次</button><button class="big red" id="gotIt">我记住了 →</button></div>`;
+  setTimeout(()=>sayChar(c),300); $('#again').onclick=()=>sayChar(c); $('#gotIt').onclick=()=>res(); }); }
+function memory(chars){ return new Promise(res=>{ $('#stepName').textContent='翻牌配对';
+  const cards=shuffle(chars.flatMap(c=>{ const x=info(c); return [{k:c,t:'c',v:c},{k:c,t:'p',v:x.e||x.w,e:!!x.e}]; }));
+  $('#stage').innerHTML=`<div style="font-size:22px;font-weight:900">把字和它的图片 / 词语配成一对</div><div class="mem">${cards.map((x,i)=>`<div class="card" data-i="${i}"><div class="in"><div class="f">${TC.icon('lantern','big')}</div><div class="b ${x.t==='p'&&x.e?'e':''}">${x.t==='p'&&!x.e?`<small>${esc(x.v)}</small>`:esc(x.v)}</div></div></div>`).join('')}</div>`;
+  window.__cards=cards; let open=[], done=0, lock=false;
+  $$('.card').forEach(el=>el.onclick=async e=>{ if(lock||el.classList.contains('flip')) return; const x=cards[+el.dataset.i]; el.classList.add('flip'); if(x.t==='c') sayChar(x.v); open.push([el,x]);
+    if(open.length===2){ lock=true; const [[a,xa],[b,xb]]=open; open=[];
+      if(xa.k===xb.k && xa.t!==xb.t){ await sleep(350); a.classList.add('done'); b.classList.add('done'); burst(e.clientX,e.clientY); done++; lock=false; if(done===chars.length){ await sleep(1000); res(); } }
+      else { await sleep(900); a.classList.remove('flip'); b.classList.remove('flip'); lock=false; } } }); }); }
+function flash(text){ return new Promise(async res=>{ const d=document.createElement('div'); d.style.cssText='position:fixed;left:50%;top:18%;transform:translateX(-50%);background:#FFFBF2;border-radius:22px;padding:14px 28px;font-size:28px;font-weight:900;box-shadow:0 0 0 3px #E8C99B,0 8px 30px rgba(0,0,0,.15);z-index:50;animation:fade .3s'; d.textContent=text; document.body.appendChild(d); say(text.replace(/[！]/gu,'')); await sleep(1700); d.remove(); res(); }); }
+
+/* ---------- learn → test ---------- */
+async function teach(b,chars,{doDrill=true}={}){ for(let i=0;i<chars.length;i++){ setDots(chars.length,i); await intro(chars[i],b); }
+  for(let i=0;i<chars.length;i+=6){ const g=chars.slice(i,i+6); if(g.length>=2) await memory(g); }
+  if(!doDrill) return {}; // relearning missed characters: straight to one check, no extra practice quiz
+  const drill=shuffle(chars.slice()); const firstOk={}; $('#stepName').textContent='练一练';
+  for(let i=0;i<drill.length;i++){ setDots(drill.length,i); firstOk[drill[i]]=await listenChoose(drill[i],{label:'刚学的字，找一找！',pool:bookChars(b)}); }
+  return firstOk; }
+async function learnThenTest(b,m){ go('play'); const B=bk(b.id); B.marked=m; B.tries=(B.tries||0)+1;
+  await flash(`我们来学 ${m.length} 个新字！`); const firstOk=await teach(b,m);
+  m.forEach(c=>learning(c,firstOk[c])); TC.save(); startTest(b,m,false); }
+function testSet(b,m,all){ const rest=shuffle(bookChars(b).filter(c=>!m.includes(c)));
+  const fresh=rest.filter(c=>!isKnown(c)), old=rest.filter(c=>isKnown(c));
+  const extra=(all?10:Math.max(4,Math.min(6,16-m.length)));
+  return shuffle(m.concat(fresh.concat(old).slice(0,extra))); }
+async function startTest(b,m,all){ go('play'); const set=testSet(b,m,all); const wrong=[]; $('#stepName').textContent='小测试';
+  await flash(all?'好！直接来测试':'学完啦，来做小测试');
+  for(let i=0;i<set.length;i++){ setDots(set.length,i); const c=set[i]; const ok=await listenChoose(c,{label:`小测试（${i+1}/${set.length}）：听一听，找出来`,allowRetry:false,pool:bookChars(b)});
+    if(!ok) wrong.push(c); }
+  const allowed=set.length<=10?1:2, B=bk(b.id); B.lastScore=`${set.length-wrong.length}/${set.length}`; if(B.firstScore===undefined) B.firstScore=B.lastScore;
+  // update character states
+  set.forEach(c=>{ if(wrong.includes(c)) result(c,false); else if(m.includes(c)) { /* learning, keep SRS */ } else if(!isKnown(c)) markKnown(c,'book'); });
+  // unseen-in-test chars from a passed book that she didn't tick → count as known
+  if(wrong.length<=allowed) bookChars(b).forEach(c=>{ if(!m.includes(c)&&!wrong.includes(c)&&!isKnown(c)&&!(Z.chars[c]?.seen>0)) markKnown(c,'book'); });
+  TC.save();
+  if(wrong.length<=allowed){ if(wrong.length){ await flash(`只错了 ${wrong.length} 个，再记一记「${wrong.join('')}」`); for(const c of wrong) await intro(c,b); } return passBook(b,set.length-wrong.length,set.length); }
+  // not yet: relearn the missed ones and retest them until clean
+  let miss=wrong.slice(); $('#stage').innerHTML=`<h1>差一点点！</h1><div style="font-size:22px">有 ${miss.length} 个字还没记牢：<span class="hanzi" style="font-size:40px;color:var(--red)">${miss.join(' ')}</span></div><div class="muted" style="font-size:18px">我们再学一遍，然后只测这几个字。</div><button class="big red" id="againGo">好的，再来！</button>`;
+  panda('别着急，再学一遍就会啦！',true); await new Promise(r=>$('#againGo').onclick=r);
+  for(let round=0; miss.length && round<4; round++){ await teach(b,miss,{doDrill:false}); const still=[]; $('#stepName').textContent='再测一次';
+    for(let i=0;i<miss.length;i++){ setDots(miss.length,i); if(!await listenChoose(miss[i],{label:`再测一次（${i+1}/${miss.length}）`,allowRetry:false,pool:bookChars(b)})) still.push(miss[i]); }
+    miss=still; if(miss.length) await flash(`还有 ${miss.length} 个，再来一次！`); }
+  passBook(b,set.length-wrong.length,set.length); }
+async function passBook(b,ok,n){ const B=bk(b.id), first=!B.passed; if(first) B.passed=TC.today(); B.readTimes=(B.readTimes||0)+1;
+  const learnt=(B.marked||[]).length, cents=first?(300+learnt*20):120;
+  TC.earn(cents,`书院读通《${b.t}》`); const r=TC.taskDone('chinese'); await TC.saveNow();
+  const next=BOOKS[BOOKS.indexOf(b)+1]; $('#stepName').textContent='读通啦'; $('#dots').innerHTML='';
+  $('#stage').innerHTML=`<img class="result-cover ${first?'gray':''}" id="rc" src="${IMG(b)}" alt=""><h1>《${esc(b.t)}》读通啦！</h1>
+   <div style="font-size:20px">测试答对 ${ok}/${n}${learnt?` · 学会了 <span class="hanzi" style="color:var(--red);font-size:30px">${(B.marked||[]).join('')}</span>`:''}</div>
+   <div class="chip" style="font-size:22px">${TC.icon('coin')} +${TC.fmt(cents)}　·　我认识 ${knownCount()} 个字</div>
+   ${first&&next?`<div style="font-size:22px;font-weight:900;color:#2E8B74">新书打开了：第 ${next.id} 本《${esc(next.t)}》</div>`:''}
+   ${r.allDoneNow?`<div style="font-size:20px;font-weight:900;color:#E2683F">今天的任务全部完成！奖励 ${TC.fmt(r.bonus)} + 1 个印章</div>`:''}
+   <div style="display:flex;gap:14px"><button class="big red" id="toWall">回书墙</button><button class="big white" id="toTown2"><img class="tci" src="../assets/icons/home.png" alt=""> 回小镇</button></div>`;
+  if(first) setTimeout(()=>$('#rc')?.classList.add('go'),400);
+  burst(innerWidth/2,innerHeight/3,['coin','star','lantern','sparkle'],18); panda(['了不起的小书童！','这本书变成彩色的啦！','熊猫先生为你骄傲！'][Math.floor(Math.random()*3)]);
+  say(`太棒了！《${b.t}》读通啦！`+(first&&next?`新书打开了！`:''));
+  $('#toWall').onclick=()=>TC.afterReward(()=>{ go('home'); if(first) renderWall(b.id); });
+  $('#toTown2').onclick=()=>TC.afterReward(()=>{ location.href='../小镇.html'; }); }
+
+/* ---------- re-reading a passed book ---------- */
+async function rereadDone(m){ const b=curBook, B=bk(b.id); go('play');
+  if(m.length){ m.forEach(c=>{ const s=st(c); s.known=false; s.box=1; s.seen=Math.max(1,s.seen); s.due=TC.today(); }); await flash(`我们把 ${m.length} 个字再记一记`); const f=await teach(b,m); m.forEach(c=>learning(c,f[c])); }
+  const t=TC.today(), fresh=B.rereadOn!==t; B.rereadOn=t; B.readTimes=(B.readTimes||0)+1; const cents=fresh?60:0; if(cents) TC.earn(cents,`书院重读《${b.t}》`); const r=TC.taskDone('chinese'); await TC.saveNow();
+  $('#stepName').textContent='重读'; $('#dots').innerHTML='';
+  $('#stage').innerHTML=`<img class="result-cover" src="${IMG(b)}" alt=""><h1>又读了一遍！</h1><div style="font-size:20px">《${esc(b.t)}》你已经读了 ${B.readTimes} 次</div>${cents?`<div class="chip" style="font-size:22px">${TC.icon('coin')} +${TC.fmt(cents)}</div>`:''}
+   ${r.allDoneNow?`<div style="font-size:20px;font-weight:900;color:#E2683F">今天的任务全部完成！奖励 ${TC.fmt(r.bonus)} + 1 个印章</div>`:''}<button class="big red" id="toWall">回书墙</button>`;
+  say('又读了一遍，真棒！'); $('#toWall').onclick=()=>TC.afterReward(()=>go('home')); }
+
+/* ---------- review of due characters ---------- */
+$('#reviewBtn').onclick=async()=>{ if(TC.guard()) return; const rev=dueChars().slice(0,MAX_REVIEW); if(!rev.length) return; go('play'); $('#stepName').textContent='复习'; let good=0;
+  for(let i=0;i<rev.length;i++){ setDots(rev.length,i); const ok=await listenChoose(rev[i],{label:'复习：听一听，是哪个字？'}); result(rev[i],ok); if(ok) good++; }
+  const cents=60+good*15; TC.earn(cents,'书院复习'); const r=TC.taskDone('chinese'); await TC.saveNow();
+  $('#stepName').textContent='完成'; $('#dots').innerHTML='';
+  $('#stage').innerHTML=`<img src="../assets/ruby_cheer.webp" style="height:220px"><h1>复习完成！</h1><div style="font-size:22px">${rev.length} 个字，一次答对 ${good} 个</div><div class="hanzi" style="font-size:56px;letter-spacing:10px;color:var(--red)">${rev.join('')}</div><div class="chip" style="font-size:22px">${TC.icon('coin')} +${TC.fmt(cents)}</div>
+   ${r.allDoneNow?`<div style="font-size:20px;font-weight:900;color:#E2683F">今天的任务全部完成！奖励 ${TC.fmt(r.bonus)} + 1 个印章</div>`:''}<button class="big red" id="toWall">回书墙</button>`;
+  say('复习完成！'); $('#toWall').onclick=()=>TC.afterReward(()=>go('home')); };
+
+/* ---------- parent ---------- */
+function openParent(){ go('parent'); const k=knownCount(); const lrn=Object.entries(Z.chars).filter(([c,s])=>!s.known&&s.seen>0).map(([c])=>c);
+  const all=[...new Set(BOOKS.flatMap(bookChars))];
+  $('#pBody').innerHTML=`
+  <div class="pc"><h3>识字量：认识 ${k} 个 · 学习中 ${lrn.length} 个</h3><div class="muted" style="font-size:14px">"认识"＝在书里没勾、测试一次答对；勾过的字要在间隔复习（1→3→7→14→30 天）里一直答对才算认识。</div></div>
+  <div class="pc"><h3>书墙进度</h3><table style="width:100%;border-collapse:collapse;font-size:15px">
+   <tr style="text-align:left;color:#8C7766"><th>书</th><th>程度</th><th>读通日期</th><th>第一次测试</th><th>勾的生字</th><th>读过</th><th></th></tr>
+   ${BOOKS.map(b=>{ const B=Z.books[b.id]||{}; return `<tr style="border-top:1px solid #EEE"><td>第${b.id}本《${esc(b.t)}》</td><td>${b.lv}</td><td>${B.passed||'—'}</td><td>${B.firstScore||'—'}</td><td class="hanzi" style="font-size:20px">${(B.marked||[]).join('')||'—'}</td><td>${B.readTimes||0} 次</td><td>${B.passed?`<button class="btn ghost" data-reset="${b.id}">重置</button>`:''}</td></tr>`; }).join('')}</table></div>
+  <div class="pc"><h3>用妈妈的声音读故事（可选）</h3><div style="font-size:15px;line-height:1.7">电脑的中文语音读单个字有时不准。妈妈可以用手机录音，把文件放进 <b>动物小镇/书院/录音/</b>：<br>
+   · 整本故事：<code>第1本.m4a</code>、<code>第2本.m4a</code>…（mp3 也行）→ 点「听故事」时先播妈妈的录音<br>
+   · 单个字（可选）：放进 <code>录音/字/</code>，文件名就是这个字，比如 <code>球.m4a</code> → 学字和测试时都用妈妈的声音<br>没有录音的地方，自动用电脑语音。</div>
+   <div style="margin-top:8px">故事原文（录音时照着读）：${BOOKS.map(b=>`<details><summary>第${b.id}本《${esc(b.t)}》</summary><div class="hanzi" style="font-size:20px;line-height:1.8">${esc(b.s)}</div></details>`).join('')}</div></div>
+  <div class="pc"><h3>书里的字（点一下切换：绿 = 认识，黄 = 学习中，灰 = 还没学）</h3><div class="cgrid" id="cg">${all.map(c=>{ const s=Z.chars[c]; const cls=s?.known?'k':(s?.seen?'l':''); return `<span class="${cls}" data-c="${c}">${c}</span>`; }).join('')}</div></div>`;
+  $$('#cg span').forEach(sp=>sp.onclick=()=>{ const c=sp.dataset.c, s=st(c); if(s.known){ s.known=false; s.box=0; s.seen=0; s.due=null; sp.className=''; } else { markKnown(c,'parent'); sp.className='k'; } TC.save(); });
+  $$('[data-reset]').forEach(x=>x.onclick=()=>{ const id=+x.dataset.reset; if(!confirm('把这本书和后面的书都重新锁上？（认识的字不会丢）')) return; BOOKS.filter(b=>b.id>=id).forEach(b=>delete Z.books[b.id]); TC.save(); openParent(); }); }
+
+/* ---------- panda & wall scrolls ---------- */
+let sayT; function panda(text,speakIt=false){ const b=$('#pandaSay'); b.textContent=text; b.classList.add('on'); clearTimeout(sayT); sayT=setTimeout(()=>b.classList.remove('on'),5200); if(speakIt) say(text); }
+const CHEERS=['不认识的字就点一下，没关系的～','你今天真认真！','读通一本，书就会变成彩色的哦！','累了就喝口水，休息一下～','我最喜欢听你读故事了！','加油，小书童！'];
+$('#panda').onclick=()=>panda(CHEERS[Math.floor(Math.random()*CHEERS.length)],true);
+function bgRect(){ const W=innerWidth,H=innerHeight, r=1672/941; let w,h; if(W/H>r){ w=W; h=W/r; } else { h=H; w=H*r; } return {x:(W-w)/2,y:(H-h)/2,w,h}; }
+function placeScrolls(){ const b=bgRect(); const put=(el,cx,top,bot,wf)=>{ el.style.left=(b.x+(cx-wf/2)*b.w)+'px'; el.style.top=(b.y+top*b.h)+'px'; el.style.width=(wf*b.w)+'px'; el.style.height=((bot-top)*b.h)+'px'; el.style.fontSize=Math.max(14,wf*b.w*0.42)+'px'; };
+  put($('#scrollL'),.225,.215,.43,.05); put($('#scrollR'),.785,.215,.43,.05);
+  const recent=Z?Object.entries(Z.chars).filter(([c,s])=>s.learnedOn).sort((a,b)=>b[1].learnedOn>a[1].learnedOn?1:-1).slice(0,4).map(([c])=>c).join(''):'';
+  $('#scrollL').textContent='学而时习'; $('#scrollR').textContent=recent||'书香满院'; }
+addEventListener('resize',placeScrolls);
+const _go=go; go=function(id){ _go(id); placeScrolls(); $('#panda').style.display=(id==='parent'||id==='read')?'none':''; $('#scrollL').style.display=$('#scrollR').style.display='none'; $('#pandaSay').classList.remove('on'); };
+
+/* ---------- boot ---------- */
+(async()=>{ T=await TC.ready; T.zh=T.zh||{}; Z=T.zh;
+  ['chars','read','books'].forEach(k=>Z[k]=Z[k]||{}); ['lessons','queue','extra','storiesSeenOpen'].forEach(k=>Z[k]=Z[k]||[]);
+  TC.startTimer(); go('home');
+  if(location.hash==='#parent'){ history.replaceState(null,'',location.pathname); if(await TC.parentPass()){ openParent(); return; } }
+  if(TC.guard()) return;
+  const cur=currentBook();
+  setTimeout(()=>{ const msg=!BOOKS.some(passed)?'欢迎来到书院！先打开第一本书，不认识的字点一下就好。':(cur?`欢迎回来！今天读《${cur.t}》吧`:'书都读通啦，复习一下吧！'); panda(msg); say(msg); },700); })();
+</script>
+</body>
+
+</html>
