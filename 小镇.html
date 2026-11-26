@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN" data-town-root=".">
-<head>
+<head><link rel="manifest" href="./manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="动物小镇"><meta name="theme-color" content="#fff6ea"><link rel="apple-touch-icon" href="./assets/icon.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>My Little Town · 动物小镇</title>
@@ -614,6 +614,9 @@ function openParent(){ const s=T.settings; const d0=TC.today();
     <label style="margin-top:6px">孩子的名字 <input type="text" id="kidName" value="${esc(T.childName||'')}" style="width:160px"></label>
     <h4>备份进度</h4><div class="muted" style="font-size:14px">进度只存在这台电脑的这个浏览器里。换电脑、换浏览器或清除浏览器数据之前，先导出一个备份文件；到新地方打开小镇后，在这里导入就能接着玩。</div>
     <div style="margin:8px 0 4px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn" id="bkExport">导出进度</button><button class="btn ghost" id="bkImport">导入进度</button><input type="file" id="bkFile" accept=".json,application/json" style="display:none"><span id="bkMsg" class="muted" style="align-self:center;font-size:14px"></span></div>
+    <div id="offBox" style="display:none"><h4>离线使用（iPad 推荐）</h4><div class="muted" style="font-size:14px">有 Wi-Fi 时点一次「下载离线包」（约 230 MB），之后没网也能玩。iPad 上再用 Safari 的「分享 → 添加到主屏幕」，从主屏幕图标打开，就像一个 App。小镇有更新时，联网打开后再点一次即可补上新内容。</div>
+    <div style="margin:8px 0 4px;display:flex;gap:8px;flex-wrap:wrap;align-items:center"><button class="btn" id="offDl">下载离线包</button><span id="offMsg" class="muted" style="font-size:14px"></span></div>
+    <div id="offBar" style="display:none;height:10px;background:#f0e4d6;border-radius:6px;overflow:hidden;max-width:420px"><div style="height:100%;width:0;background:#7bbf8e"></div></div></div>
     <h4>零花钱记录</h4><div style="max-height:220px;overflow:auto"><table>${T.ledger.slice(-40).reverse().map(l=>`<tr><td>${l.d.slice(5)}</td><td>${esc(l.why)}</td><td style="color:${l.c>=0?'#1E7D6F':'#B4421F'}">${l.c>=0?'+':''}${TC.fmt(l.c)}</td></tr>`).join('')}</table></div>
     <div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn ghost" id="gift">发 $5 奖励</button><button class="btn ghost" id="pinChange">修改家长密码</button><button class="btn ghost" id="redoSetup">重新做首次设置</button></div></div>`;
   $$('input[name=goal]').forEach(r=>r.onchange=()=>{ s.goal=r.value; $('#customBox').style.display=s.goal==='custom'?'':'none'; TC.save(); });
@@ -630,6 +633,11 @@ function openParent(){ const s=T.settings; const d0=TC.today();
   $('#pinChange').onclick=async()=>{ T.pin=null; await TC.askPin(); };
   $('#bkExport').onclick=async()=>{ $('#bkMsg').textContent='正在打包…'; try{ await TC.backupExport(); $('#bkMsg').textContent='✓ 已下载备份文件（在「下载」文件夹里）'; }catch(e){ $('#bkMsg').textContent='导出失败：'+e.message; } };
   $('#bkImport').onclick=()=>$('#bkFile').click();
+  if(TC.ONLINE_SITE){ $('#offBox').style.display=''; TC.offlineStatus().then(st=>{ if(st.have) $('#offMsg').textContent=`✓ 已下载（${st.have.at.slice(0,10)}${st.have.fail?`，有 ${st.have.fail} 个文件没下好，可以再点一次`:''}）${st.standalone?'':' · 还没添加到主屏幕'}`; });
+    $('#offDl').onclick=async()=>{ const b=$('#offDl'); b.disabled=true; $('#offBar').style.display=''; const bar=$('#offBar').firstElementChild;
+      try{ const r=await TC.offlineDownload((d,t)=>{ const pc=Math.round(d/t*100); bar.style.width=pc+'%'; $('#offMsg').textContent=`正在下载… ${pc}%（${Math.round(d/1e6)} / ${Math.round(t/1e6)} MB）`; });
+        $('#offMsg').textContent=r.fail?`下载完成，但有 ${r.fail} 个文件失败，请再点一次`:'✓ 离线包已下载好，没网也能玩了'; }
+      catch(e){ $('#offMsg').textContent='下载失败：'+e.message+'（请确认已联网）'; } b.disabled=false; }; }
   $('#bkFile').onchange=async e=>{ const f=e.target.files[0]; if(!f) return; if(!confirm('导入会用备份文件里的进度替换这里现在的进度，确定吗？')){ e.target.value=''; return; } $('#bkMsg').textContent='正在导入…'; try{ const d=await TC.backupImport(f); $('#bkMsg').textContent='✓ 导入成功，马上刷新'; setTimeout(()=>location.reload(),800); }catch(err){ $('#bkMsg').textContent=err.message==='bad-file'?'这不是小镇的备份文件':'导入失败：'+err.message; e.target.value=''; } };
   openPanel('#pParent'); refreshReport(); }
 function refreshReport(){ todayReport().then(h=>{ const b=$('#repBox'); if(b){ b.classList.remove('muted'); b.innerHTML=h; } }); }

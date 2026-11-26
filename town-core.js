@@ -1,5 +1,25 @@
 /* 动物小镇 · 共享核心：钱包、每日任务、防沉迷、晚安画面
    每个小游戏都要 <script src="(相对路径)/town-core.js"></script>，并在 <html data-town-root="..."> 写明到小镇根目录的相对路径 */
+/* ---------- touch devices (iPad): unlock audio on first tap, replay sounds that were blocked ---------- */
+(function(){
+  const touch=('ontouchstart' in window)||navigator.maxTouchPoints>1;
+  const P=HTMLMediaElement.prototype, orig=P.play; let unlocked=false; const waiting=new Set();
+  const SIL='data:audio/mpeg;base64,SUQzBAAAAAAAI1RTU0UAAAAPAAADTGF2ZjYwLjE2LjEwMAAAAAAAAAAAAAAA//NwwAAAAAAAAAAAAEluZm8AAAAPAAAACAAAA/oAR0dHR0dHR0dHR0dHYmJiYmJiYmJiYmJifHx8fHx8fHx8fHx8fJaWlpaWlpaWlpaWlrGxsbGxsbGxsbGxsbHLy8vLy8vLy8vLy8vl5eXl5eXl5eXl5eXl////////////////AAAAAExhdmM2MC4zMQAAAAAAAAAAAAAAACQC1AAAAAAAAAP6yysejgAAAAAAAAAAAAAAAAD/80DEAAAAA0gAAAAATEFNRTMuMTAwVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsRbAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVUxBTUUzLjEwMFVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQMSkAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NCxKMAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVVTEFNRTMuMTAwVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVV//NAxKQAAANIAAAAAFVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80LEowAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVMQU1FMy4xMDBVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVX/80DEpAAAA0gAAAAAVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVf/zQsSjAAADSAAAAABVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVVQ==';
+  const POOL=[];
+  function unlock(){ if(unlocked) return; unlocked=true;
+    if(touch){ for(let i=0;i<6;i++){ const a=new (window.__OrigAudio||Audio)(); a.src=SIL; a.muted=true; orig.call(a).then(()=>{ a.pause(); a.muted=false; a.removeAttribute('src'); a.load(); POOL.push(a); }).catch(()=>{}); } }
+    waiting.forEach(fn=>fn()); waiting.clear(); }
+  ['pointerdown','touchend','click','keydown'].forEach(ev=>addEventListener(ev,()=>{ unlock(); if(waiting.size){ const w=[...waiting]; waiting.clear(); w.forEach(fn=>fn()); } },{capture:true,passive:true}));
+  P.play=function(){ const el=this; return orig.call(el).catch(err=>{ if(err&&err.name==='NotAllowedError'){ unlocked=false; return new Promise((res,rej)=>{ const go=()=>orig.call(el).then(res,rej); waiting.add(go); setTimeout(()=>{ if(waiting.delete(go)) rej(err); },15000); }); } throw err; }); };
+  if(touch){ const OA=window.Audio; window.__OrigAudio=OA;
+    window.Audio=function(src){ const a=POOL.find(x=>x.paused&&!x.loop&&!x.__busy); let el;
+      if(a){ el=a; el.__busy=true; el.loop=false; el.playbackRate=1; el.volume=1; const free=()=>{ el.__busy=false; }; el.addEventListener('ended',free,{once:true}); el.addEventListener('error',free,{once:true}); setTimeout(free,30000); if(src!==undefined) el.src=src; }
+      else { el=src!==undefined?new OA(src):new OA(); }
+      return el; };
+    window.Audio.prototype=OA.prototype; }
+})();
+/* ---------- offline (website only): service worker + downloadable offline pack ---------- */
+const ONLINE_SITE=/^https?:/.test(location.protocol)&&('serviceWorker' in navigator);
 (function(){
 "use strict";
 const ROOT = (document.documentElement.dataset.townRoot || '.').replace(/\/$/,'');
@@ -303,7 +323,42 @@ if('speechSynthesis' in window) speechSynthesis.getVoices();
 /* ---------- picture icons (assets/icons/*.png) instead of emoji ---------- */
 function icon(n,cls=''){ return `<img class="tci ${cls}" src="${ROOT}/assets/icons/${n}.png" alt="" draggable="false">`; }
 function ico(x){ return /^[a-z]+$/.test(String(x))?icon(x):String(x); }
+(()=>{ const t2=document.createElement('style'); t2.textContent='html{touch-action:manipulation;-webkit-tap-highlight-color:transparent;-webkit-text-size-adjust:100%} button,.btn,[data-k],img{-webkit-user-select:none;user-select:none;-webkit-touch-callout:none}'; document.head.appendChild(t2); })();
 (()=>{ const st=document.createElement('style'); st.textContent='img.tci{height:1.2em!important;width:1.2em!important;max-width:none!important;object-fit:contain;vertical-align:-.25em;display:inline-block;pointer-events:none;background:none!important;box-shadow:none!important;border:0!important;border-radius:0!important;margin:0!important;padding:0!important;filter:none}img.tci.big{height:1em!important;width:1em!important;vertical-align:middle}'; (document.head||document.documentElement).appendChild(st); })();
+
+if(ONLINE_SITE){ try{ navigator.serviceWorker.register(ROOT+'/sw.js',{scope:ROOT+'/'}).catch(()=>{}); }catch(e){} }
+const OFF_CACHE='mlt-offline';
+async function offlineStatus(){ if(!ONLINE_SITE||!window.caches) return {supported:false};
+  let m=null; try{ m=JSON.parse(localStorage.getItem('mlt_offline')||'null'); }catch(e){}
+  let est=null; try{ est=navigator.storage&&await navigator.storage.estimate(); }catch(e){}
+  return {supported:true,have:m,standalone:matchMedia('(display-mode: standalone)').matches||navigator.standalone===true,usage:est&&est.usage}; }
+async function offlineDownload(onProg){
+  if(!ONLINE_SITE) throw new Error('只能在网站上下载离线包');
+  try{ navigator.storage&&navigator.storage.persist&&await navigator.storage.persist(); }catch(e){}
+  const base=new URL(ROOT+'/',location.href);
+  const list=await (await fetch(new URL('files.json',base),{cache:'no-store'})).json();
+  const cache=await caches.open(OFF_CACHE);
+  let prev={}; try{ prev=JSON.parse(localStorage.getItem('mlt_offline_h')||'{}'); }catch(e){}
+  const todo=list.files.filter(f=>prev[f.p]!==f.h);
+  const total=list.files.reduce((a,f)=>a+f.s,0); let done=list.files.filter(f=>prev[f.p]===f.h).reduce((a,f)=>a+f.s,0);
+  let i=0, fail=0; const now={...prev};
+  async function worker(){ while(i<todo.length){ const f=todo[i++]; const url=new URL(f.p.split('/').map(encodeURIComponent).join('/'),base).href;
+      for(let t=0;t<3;t++){ try{ const r=await fetch(url,{cache:'no-store'}); if(!r.ok) throw new Error(r.status); await cache.put(url,r); now[f.p]=f.h; break; }catch(e){ if(t===2) fail++; } }
+      done+=f.s; onProg&&onProg(done,total);
+      if(i%200===0) try{ localStorage.setItem('mlt_offline_h',JSON.stringify(now)); }catch(e){} } }
+  await Promise.all(Array.from({length:6},worker));
+  for(const p of Object.keys(now)) if(!list.files.find(f=>f.p===p)) delete now[p];
+  try{ localStorage.setItem('mlt_offline_h',JSON.stringify(now)); localStorage.setItem('mlt_offline',JSON.stringify({ver:list.ver,at:new Date().toISOString(),n:list.files.length,fail})); }catch(e){}
+  return {fail,n:list.files.length};
+}
+
+/* tip on touch devices held upright: the town is designed for landscape */
+(()=>{ const coarse=matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>1; if(!coarse) return;
+  const tip=()=>{ const old=document.getElementById('tc-rot'); if(old) old.remove(); if(innerHeight<=innerWidth) return;
+    const d=document.createElement('div'); d.id='tc-rot'; d.textContent=(typeof LANG!=='undefined'&&LANG==='zh')?'把 iPad 横过来玩，画面更大更清楚 ↻':'Turn the iPad sideways for a bigger picture ↻';
+    d.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99999;background:rgba(40,30,50,.85);color:#fff;font:600 16px/1.3 system-ui,sans-serif;padding:10px 18px;border-radius:20px;pointer-events:none;transition:opacity .6s';
+    document.body.appendChild(d); setTimeout(()=>{ d.style.opacity='0'; setTimeout(()=>d.remove(),700); },4500); };
+  addEventListener('load',()=>setTimeout(tip,600)); addEventListener('orientationchange',()=>setTimeout(tip,400)); })();
 /* ---------- full progress backup (all IndexedDB stores of this site + mlt_* localStorage) ---------- */
 async function enc(v){
   if(v instanceof Blob){ const u=await new Promise(r=>{ const f=new FileReader(); f.onload=()=>r(f.result); f.readAsDataURL(v); }); return {__t:'blob',type:v.type,data:u}; }
@@ -366,6 +421,6 @@ async function backupImport(file){
   try{ for(const [k,v] of Object.entries(data.ls||{})) localStorage.setItem(k,v); }catch(e){}
   return data;
 }
-window.TownCore = { backupExport, backupImport, diaryOpen, icon, ico, bgm, setMusic, musicOn, musicVol, setArea, addStamp, stampsToward, hatchShow, ready, get state(){ return T; }, save, saveNow, today, fmt, earn, spend, GAMES, GOALS, tasksToday, allDone, taskDone, eggsAvailable, STAMPS_PER_EGG,
+window.TownCore = { offlineStatus, offlineDownload, ONLINE_SITE, backupExport, backupImport, diaryOpen, icon, ico, bgm, setMusic, musicOn, musicVol, setArea, addStamp, stampsToward, hatchShow, ready, get state(){ return T; }, save, saveNow, today, fmt, earn, spend, GAMES, GOALS, tasksToday, allDone, taskDone, eggsAvailable, STAMPS_PER_EGG,
   startTimer, usedSec, limitSec, remainingSec, overtime, guard, afterReward, showNight, showBanner, askPin, parentPass, lang, setLang, L, trText, speak, speakZh, speakEn, stopSpeech, voiceKey, animalStyle, ROOT };
 })();

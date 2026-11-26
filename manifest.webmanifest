@@ -1,0 +1,10 @@
+{
+  "name": "动物小镇 My Little Town",
+  "short_name": "动物小镇",
+  "start_url": "%E5%B0%8F%E9%95%87.html",
+  "scope": "./",
+  "display": "standalone",
+  "background_color": "#fff6ea",
+  "theme_color": "#fff6ea",
+  "icons": [{"src": "assets/icon.png", "sizes": "512x512", "type": "image/png", "purpose": "any"}]
+}

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <html lang="en" data-town-root="..">
-<head>
+<head><link rel="manifest" href="../manifest.webmanifest"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="mobile-web-app-capable" content="yes"><meta name="apple-mobile-web-app-title" content="动物小镇"><meta name="theme-color" content="#fff6ea"><link rel="apple-touch-icon" href="../assets/icon.png">
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>我的小屋 · 日记</title>
@@ -222,7 +222,7 @@ function dayMode(){ DAY=true; document.body.classList.add('day'); $('#byeBtn').i
   $('#petName').textContent=TC.L(ANIMALS[petId]?.zh||'',ANIMALS[petId]?.en||''); petSetup();
   place(); dayWelcome(); const note=T.notes.find(n=>!n.read); if(note) showEnvelope(note); }
 function dayWelcome(){ const name=T.childName||TC.L('小朋友','friend'); const letters=(T.notes||[]).length;
-  show(`<h1>${TC.L(`${esc(name)} 的小屋`,`${esc(name)}'s room`)}</h1><div class="sub">${TC.L('可以翻翻以前的日记和妈妈的信。今天的游戏时间用完以后，就可以来写新的日记啦。','You can read your old diary and Mum\'s letters. When today\'s play time is used up, come back and write a new page.')}</div>
+  show(`<h1>${(TC.state.childName||'').trim()?TC.L(`${esc(name)} 的小屋`,`${esc(name)}'s room`):TC.L('我的小屋','My room')}</h1><div class="sub">${TC.L('可以翻翻以前的日记和妈妈的信。今天的游戏时间用完以后，就可以来写新的日记啦。','You can read your old diary and Mum\'s letters. When today\'s play time is used up, come back and write a new page.')}</div>
    <div class="row"><button class="big white" id="dBook">${TC.L('翻翻我的日记','Read my diary')}</button>${letters?`<button class="big gold" id="dMail">${TC.L('妈妈的信','Letters from Mum')}</button>`:''}<button class="big teal" id="dTown">${TC.L('回小镇','Back to town')}</button></div>`);
   $('#dBook').onclick=openBook; $('#dTown').onclick=()=>location.href='../小镇.html'; if($('#dMail')) $('#dMail').onclick=openLetters;
   TC.speak(TC.L('欢迎回到小屋！可以看看以前的日记哦。','Welcome to your room! You can read your old diary.'), TC.lang()==='en'?'en-NZ':'zh-CN'); }
