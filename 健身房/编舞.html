@@ -212,7 +212,7 @@ $('#woStop').onclick=()=>{ stopRun(); go('home'); };
 $('#woPause').onclick=()=>{ if(!RUN) return; RUN.paused=!RUN.paused; $('#woPause').textContent=RUN.paused?L('继续','Resume'):L('暂停','Pause'); };
 
 async function finish(moves){ const learned=[]; moves.forEach(m=>{ const before=G.done[m.id]||0; G.done[m.id]=before+1; if(before<NEED&&G.done[m.id]>=NEED) learned.push(m); });
-  G.sessions=(G.sessions||0)+1; const first=G.lastDay!==TC.today(); G.lastDay=TC.today(); const cents=first?150:60; TC.earn(cents,'健身房锻炼'); await TC.saveNow();
+  G.sessions=(G.sessions||0)+1; const first=G.lastDay!==TC.today(); G.lastDay=TC.today(); const cents=first?150:60; TC.earn(cents,'健身房锻炼'); TC.tourMark('gym'); await TC.saveNow();
   const mapNew=learned.filter(m=>m.map); go('done');
   $('#doneBody').innerHTML=`<div style="font-size:44px;font-weight:900">${L('太棒了！今天的锻炼完成啦','Amazing! Workout done!')}</div><div class="chip" style="font-size:22px">${L('赚了','You earned')} ${TC.fmt(cents)}</div>
    ${learned.map(m=>`<div style="font-size:22px;color:#3FA88C;font-weight:900">${L(`学会了「${m.zh}」！`,`You learned "${m.en}"!`)}</div>`).join('')}
@@ -240,6 +240,7 @@ $('#goWo').onclick=workout;
 $('#reroll').onclick=()=>{ const d=TC.today(); G.reroll=G.reroll||{}; G.reroll={[d]:(G.reroll[d]||0)+1}; TC.save(); renderHome(); };
 $('#goTree').onclick=()=>go('tree'); $('#trBack').onclick=()=>go('home');
 (async()=>{ T=await TC.ready; T.gym=T.gym||{done:{}}; G=T.gym; G.done=G.done||{}; TC.startTimer(); go('home'); if(TC.guard()) return;
+  await TC.guide(TC.GUIDES.gym);
   setTimeout(()=>say(G.sessions?'欢迎回来！今天的锻炼准备好啦！':'欢迎来到健身房！看看今天的 4 个动作，跟着计时一起做吧！', G.sessions?"Welcome back! Today's workout is ready!":"Welcome to the gym! Here are today's four moves. Let's do them together!"),600); })();
 </script>
 </body>

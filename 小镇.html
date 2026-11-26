@@ -268,6 +268,11 @@ html[lang=en] .slab{font-size:calc(min(100vw,100vh*1.777)*.0155);letter-spacing:
 .about .row b{display:block;font-size:13px;color:#8A7F99;letter-spacing:.04em;margin-bottom:2px}
 .about a{color:#2EA493;font-weight:800;word-break:break-all}
 .about .foot{color:#8A7F99;font-size:13px;text-align:center;margin-top:16px;line-height:1.6}
+.tourHead{display:flex;gap:16px;align-items:center;margin-bottom:14px}.tourHead img{height:120px;flex:0 0 auto}
+.tourRow .tface{width:56px;height:56px;object-fit:contain;object-position:top;background:#FFF3E2;border-radius:50%;padding:3px}
+.tourRow.next{outline:3px solid #FFC94D}.tourRow.just{animation:tourJust 1.2s ease-out 2}@keyframes tourJust{30%{transform:scale(1.04);background:#FFF3C4}}
+.tourToast{position:fixed;left:50%;top:84px;transform:translateX(-50%);z-index:3000;background:#fff;border-radius:999px;padding:12px 24px;font-weight:900;font-size:20px;box-shadow:0 8px 24px rgba(0,0,0,.18);animation:tourT 3.6s both}.tourToast .tci{width:26px;height:26px;vertical-align:-6px}
+@keyframes tourT{0%{opacity:0;transform:translate(-50%,-20px)}10%,85%{opacity:1;transform:translate(-50%,0)}100%{opacity:0}}
 </style>
 </head>
 <body>
@@ -275,6 +280,7 @@ html[lang=en] .slab{font-size:calc(min(100vw,100vh*1.777)*.0155);letter-spacing:
 <div id="hud">
   <span class="chip" id="coinChip">$0.00</span>
   <button class="chip" id="taskChip">今日任务</button>
+  <button class="chip" id="tourChip" style="display:none"></button>
   <span class="chip" title="今天还能玩多久"><img class="tci" src="assets/icons/sun.png" alt=""> <span id="dayBar"><b></b></span> <img class="tci" src="assets/icons/moon.png" alt=""></span>
   <span class="grow"></span>
   <button class="iconbtn" id="langBtn" title="Language" data-zh>中 / EN</button>
@@ -286,6 +292,7 @@ html[lang=en] .slab{font-size:calc(min(100vw,100vh*1.777)*.0155);letter-spacing:
 <section class="panel" id="pShop"><div class="sheet"><header><h2>杂货店</h2><div class="tabs" id="shopTabs"><button data-t="clothes" class="on">衣服</button><button data-t="acc">饰品</button><button data-t="nails">美甲</button><button data-t="decor">小动物用品</button><button data-t="work">当小店员赚钱</button></div><span class="grow" style="flex:1"></span><span class="chip" id="shopCoins"></span><button class="close" data-close>×</button></header><div class="body" id="shopBody"></div></div></section>
 <section class="panel" id="pHome"><div class="sheet"><header><h2>我的家</h2><span style="flex:1"></span><button class="close" data-close>×</button></header><div class="body"><div class="homewrap"><div class="me" style="position:relative"><img id="meImg" alt=""></div><div class="wardrobe"><div id="diaryEntry"></div><h3 style="margin:0 0 12px;font-size:24px">我的衣柜</h3><div class="grid" id="wardrobe"></div><h3 style="margin:22px 0 12px;font-size:24px">首饰盒</h3><div class="grid" id="jewel"></div><h3 style="margin:22px 0 12px;font-size:24px">美甲相册</h3><div class="album" id="nailAlbum"></div></div></div></div></div></section>
 <section class="panel" id="pPark"><div class="sheet"><header><h2>宠物乐园</h2><span style="flex:1"></span><button class="close" data-close>×</button></header><div class="body" id="parkBody"></div></div></section>
+<section class="panel" id="pTour"><div class="sheet" style="width:min(760px,100%);height:auto;max-height:100%"><header><h2>新手任务</h2><span style="flex:1"></span><button class="close" data-close>×</button></header><div class="body" id="tourBody"></div></div></section>
 <section class="panel" id="pTasks"><div class="sheet" style="width:min(760px,100%);height:auto;max-height:100%"><header><h2>今日任务</h2><span style="flex:1"></span><button class="close" data-close>×</button></header><div class="body" id="taskBody"></div></div></section>
 <section class="panel" id="pMail"><div class="sheet" style="width:min(820px,100%)"><header><h2>我的信箱</h2><span style="flex:1"></span><button class="close" data-close>×</button></header><div class="body" id="mailBody"></div></div></section>
 <section class="panel" id="pParent"><div class="sheet"><header><h2>家长中心</h2><span style="flex:1"></span><button class="close" data-close>×</button></header><div class="body" id="parentBody"></div></div></section>
@@ -396,7 +403,7 @@ function openTasks(daily){ const ts=TC.tasksToday(); const all=TC.allDone();
   if(daily){ say(TC.L(`今天有${ts.length}个小任务，做完全部可以得到两块钱奖励！`,`You have ${ts.length} little tasks today. Finish them all for a two dollar reward!`)); const cl=$('#pTasks [data-close]'); if(cl){ const once=()=>{ cl.removeEventListener('click',once); setTimeout(mailPopup,500); }; cl.addEventListener('click',once); } } }
 
 /* ---------- home / wardrobe ---------- */
-function openHome(){ $('#meImg').src=outfitSrc(T.outfit);
+function openHome(){ TC.tourMark('home'); TC.guide(TC.GUIDES.home,{btn:false}); $('#meImg').src=outfitSrc(T.outfit);
   const hm=new Date().getHours()*60+new Date().getMinutes(); const done=T.diary.some(e=>e.d===TC.today()); const unread=T.notes.some(n=>!n.read);
   $('#diaryEntry').innerHTML = TC.diaryOpen() ? `<button class="big" style="background:#2B2D5C;color:#FFE7A8;margin-bottom:16px;width:100%" onclick="location.href='小屋/日记.html'">${done?'看看我的日记':'来写今天的日记吧'}${unread?'（有一封妈妈的信）':''}</button>` : `<button class="big white" style="margin-bottom:8px;width:100%" onclick="location.href='小屋/日记.html'">翻翻我的日记${unread?'（有一封妈妈的信）':''}</button><div class="muted" style="margin-bottom:14px;font-size:15px;text-align:center">今天的游戏时间用完以后，就可以写新的日记</div>`;
   $('#wardrobe').innerHTML=OUTFITS.map(o=>{ const own=T.owned.includes(o.id); return `<div class="card ${own?'owned':''} ${T.outfit===o.id?'wearing':''}" data-o="${o.id}" style="${own?'':'opacity:.55'}"><img src="${outfitSrc(o.id)}" alt="" style="${own?'':'filter:grayscale(.7) brightness(1.05)'}"><div class="nm">${esc(o.zh)}</div><div class="pr">${own?(T.outfit===o.id?'正在穿':'点我换上'):'去杂货店买 '+TC.fmt(o.price)}</div></div>`; }).join('');
@@ -408,7 +415,7 @@ function openHome(){ $('#meImg').src=outfitSrc(T.outfit);
   openPanel('#pHome'); }
 
 /* ---------- pet park ---------- */
-function openPark(){ const eggs=TC.eggsAvailable(); const need=TC.STAMPS_PER_EGG; const cur=TC.stampsToward();
+function openPark(){ TC.tourMark('park'); TC.guide(TC.GUIDES.park,{btn:false}); const eggs=TC.eggsAvailable(); const need=TC.STAMPS_PER_EGG; const cur=TC.stampsToward();
   const owned=new Set(T.decor);
   const field=DECOR.filter(d=>owned.has(d.id)).map(d=>{ const [x,y,w]=d.slot; return `<div class="dc ${d.fly?'fly':''}" data-d="${d.id}" style="left:${x}%;top:${y}%;width:${w}%;z-index:${Math.round(y)}">${d.e}</div>`; }).join('');
   const pets=T.animals.map((a,k)=>`<div class="pk" data-a="${a}"><div><i style="${TC.animalStyle(a).replace(/animals(\d)\.webp/,'animals$1t.webp')}"></i></div></div>`).join('');
@@ -441,7 +448,7 @@ const SHOP_ST=[
  {id:'nails',zh:'美甲',box:[53,24,74,82],lab:[64,19.7],tag:'美甲',go:()=>openShop('nails')},
  {id:'till',zh:'收银台',box:[74.5,24,100,82],lab:[88.3,18.6],tag:'收银台',go:()=>{ $('#tillChoice').classList.toggle('on'); }},
 ];
-function openShopScene(){ $('#shopSceneCoins').innerHTML=TC.icon('coin')+' '+TC.fmt(T.coins); $('#tillChoice').classList.remove('on');
+function openShopScene(){ TC.guide(TC.GUIDES.shop,{btn:false}); $('#shopSceneCoins').innerHTML=TC.icon('coin')+' '+TC.fmt(T.coins); $('#tillChoice').classList.remove('on');
   $('#shopStations').innerHTML=SHOP_ST.map(s=>{ const [x0,y0,x1,y1]=s.box; return `<div class="sst" data-st="${s.id}" style="left:${x0}%;top:${y0}%;width:${x1-x0}%;height:${y1-y0}%"><div class="tag">${s.tag}</div></div><div class="slab" style="left:${s.lab[0]}%;top:${s.lab[1]}%">${s.zh}</div>`; }).join('');
   $$('#shopStations .sst').forEach(el=>el.onclick=()=>SHOP_ST.find(x=>x.id===el.dataset.st).go());
   $('#shopScene').classList.add('on'); TC.speakZh('欢迎光临！想买点什么？'); }
@@ -795,8 +802,27 @@ function setSpellLevel(lv){ return new Promise(res=>{ try{ const r=indexedDB.ope
   r.onsuccess=()=>{ const db=r.result; const tx=db.transaction('kv','readwrite'); const st=tx.objectStore('kv'); const q=st.get('state'); q.onsuccess=()=>{ const S=q.result; if(S){ if(!(S.sessions||[]).length){ S.level=lv; st.put(S,'state'); } } else { st.put({pendingLevel:lv},'pendingLevel'); } }; tx.oncomplete=()=>{ db.close(); res(); }; tx.onerror=()=>res(); }; r.onerror=()=>res(); }catch(e){ res(); } }); }
 
 
+/* ---------- newcomer tour (town side) ---------- */
+const TOUR_GO={spelling:'图书馆/拼写.html',chinese:'书院/认字.html',math:'面包店/烘焙.html',gym:'健身房/编舞.html',diary:'小屋/日记.html'};
+function tourGo(id){ closePanels(); if(TOUR_GO[id]) location.href=TOUR_GO[id]; else if(id==='shop') openShopScene(); else if(id==='home') openHome(); else if(id==='park') openPark(); }
+function tourCount(){ return TC.TOUR.filter(x=>T.tour&&T.tour.done&&T.tour.done[x.id]).length; }
+function updateTourChip(){ const c=$('#tourChip'); if(!c) return; const on=TC.tourActive(); c.style.display=on?'':'none'; if(on) c.innerHTML=TC.icon('star')+' '+TC.L(`新手任务 ${tourCount()}/${TC.TOUR.length}`,`Newcomer ${tourCount()}/${TC.TOUR.length}`); }
+function openTour(){ const D=(T.tour&&T.tour.done)||{}; const just=T.tour&&T.tour.just; const nextT=TC.TOUR.find(x=>!D[x.id]);
+  $('#tourBody').innerHTML=`<div class="tourHead"><img src="${TC.teacherImg('mayor')}" alt=""><div><div style="font-size:22px;font-weight:900">${TC.L('每个地方都去玩一次吧！','Try every place once!')}</div><div class="muted" style="font-size:16px;line-height:1.5">${TC.L(`每完成一个得 <b>$0.50</b>，${TC.TOUR.length} 个全部完成还送你<b>一件漂亮的饰品</b>！`,`Each one earns <b>$0.50</b>. Finish all ${TC.TOUR.length} to win <b>a pretty accessory</b>!`)}</div></div></div>`
+   + TC.TOUR.map(t=>{ const ok=!!D[t.id]; return `<div class="task tourRow ${t.id===just?'just':''} ${!ok&&nextT&&t.id===nextT.id?'next':''}"><img class="tface" src="${TC.teacherImg(t.who)}" alt=""><span style="flex:1">${esc(TC.L(t.zh,t.en))}<div class="muted" style="font-size:15px">${esc(TC.teacherName(t.who))}</div></span>${ok?'<span class="ck">✓</span>':`<button class="big teal" data-tgo="${t.id}" style="font-size:18px;padding:10px 22px">${TC.L('去玩','Go')}</button>`}</div>`; }).join('');
+  $$('#tourBody [data-tgo]').forEach(b=>b.onclick=()=>tourGo(b.dataset.tgo));
+  openPanel('#pTour'); updateTourChip();
+  if(just){ const t=TC.TOUR.find(x=>x.id===just); T.tour.just=null; TC.save(); say(TC.L(`新手任务完成：${t.zh}！得到五毛钱。`+(nextT?`下一个：${nextT.zh}。`:''),`Newcomer task done! You earned 50 cents.`+(nextT?` Next: ${nextT.en}.`:''))); }
+  else if(nextT) say(TC.L(`下一个新手任务：${nextT.zh}`,`Next newcomer task: ${nextT.en}`)); }
+function tourToast(text){ const d=document.createElement('div'); d.className='tourToast'; d.innerHTML=TC.icon('star')+' '+text; document.body.appendChild(d); setTimeout(()=>d.remove(),3600); }
+async function tourPrize(){ if(!T.tour||!T.tour.prize) return false; T.tour.prize=0; T.acc=T.acc||[]; const pick=ACC.find(a=>a.id==='bigbow'&&!T.acc.includes(a.id))||ACC.find(a=>!T.acc.includes(a.id));
+  if(pick) T.acc.push(pick.id); await TC.saveNow(); updateTourChip();
+  alertBox(TC.L('新手任务全部完成！','All newcomer tasks done!'),`${pick?`<div class="card owned" style="margin:0 auto 14px;width:140px"><div class="acc" style="${accStyle(ACC.indexOf(pick))};width:110px;height:110px;margin:auto"></div></div>`:''}${TC.L(`你已经会玩小镇里所有的游戏啦！<br>镇长送你 <b>${pick?pick.zh:'一份礼物'}</b>，已经放进我的家里的首饰盒。`,`You know every game in town now!<br>The mayor gives you a present: it is in the jewellery box at My Home.`)}`,()=>closePanels());
+  say(TC.L('新手任务全部完成！镇长送你一件饰品，放进首饰盒啦！','All newcomer tasks done! The mayor gave you an accessory. It is in your jewellery box!')); return true; }
+function tourWatch(){ updateTourChip(); if(!T.tour) return; if(T.tour.prize&&!$('.panel.on')){ tourPrize(); return; }
+  if(T.tour.just&&!$('.panel.on')&&!document.getElementById('tc-guide')){ const t=TC.TOUR.find(x=>x.id===T.tour.just); T.tour.just=null; TC.save(); if(t) tourToast(TC.L(`新手任务完成：${t.zh}  +$0.50`,`Newcomer task done: ${t.en}  +$0.50`)); } }
 /* ---------- about / contact ---------- */
-const APP_VER='1.1', APP_DATE='2026-11-26', FEEDBACK='sfycnz@gmail.com';
+const APP_VER='1.2', APP_DATE='2026-11-26', FEEDBACK='sfycnz@gmail.com';
 function aboutHTML(){ const L=TC.L;
   return `<div class="about"><h3>${L('关于动物小镇','About My Little Town')}</h3>
   <div class="tag">${L('一个妈妈为女儿做的学习小镇：拼单词、认汉字、做数学、跳舞健身、写日记。','A learning town a mum made for her daughter: spelling, Chinese characters, maths, dance and fitness, and a diary.')}</div>
@@ -816,9 +842,11 @@ function closeAbout(){ $('#aboutPane').classList.remove('on'); }
   await runSetup();
   if(TC.guard()) return;
   const firstToday=T.taskSeen!==TC.today();
-  if(firstToday && !T.welcomeGift){ T.taskSeen=TC.today(); TC.save(); setTimeout(()=>{ openTasks(true); },900); }
+  $('#tourChip').onclick=openTour; updateTourChip(); setInterval(tourWatch,1500); TC.guide(TC.GUIDES.town,{auto:false});
+  if(TC.tourActive()&&!T.welcomeGift){ if(firstToday){ T.taskSeen=TC.today(); TC.save(); } setTimeout(async()=>{ await TC.guide(TC.GUIDES.town); openTour(); },900); }
+  else if(firstToday && !T.welcomeGift){ T.taskSeen=TC.today(); TC.save(); setTimeout(()=>{ openTasks(true); },900); }
   else setTimeout(mailPopup, T.welcomeGift?4000:1200);
-  if(T.welcomeGift){ T.welcomeGift=false; TC.save(); setTimeout(()=>{ alertBox('欢迎来到动物小镇！',`镇长送你 <b>$10.00</b> 见面礼！<br>点房子就能进去玩：图书馆拼单词、杂货店买衣服和赚钱、<br>我的家换衣服、宠物乐园看小动物。<br>先去广场的公告栏看看今天的任务吧！`,()=>closePanels()); TC.speakZh('欢迎来到动物小镇！镇长送你十块钱见面礼！'); },600); }
+  if(T.welcomeGift){ T.welcomeGift=false; TC.save(); setTimeout(()=>{ alertBox('欢迎来到动物小镇！',`镇长送你 <b>$10.00</b> 见面礼！<br>点房子就能进去玩：图书馆拼单词、杂货店买衣服和赚钱、<br>我的家换衣服、宠物乐园看小动物。<br>先去广场的公告栏看看今天的任务吧！`,async()=>{ closePanels(); if(TC.tourActive()){ T.taskSeen=TC.today(); TC.save(); await TC.guide(TC.GUIDES.town); openTour(); } }); TC.speakZh('欢迎来到动物小镇！镇长送你十块钱见面礼！'); },600); }
   if(location.hash==='#park') openPark(); if(location.hash==='#home') openHome();
   if(location.hash==='#shop') openShop('work');
 })();

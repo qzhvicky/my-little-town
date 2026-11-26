@@ -422,6 +422,7 @@ const _go=go; go=function(id){ _go(id); placeScrolls(); $('#panda').style.displa
   TC.startTimer(); go('home');
   if(location.hash==='#parent'){ history.replaceState(null,'',location.pathname); if(await TC.parentPass()){ openParent(); return; } }
   if(TC.guard()) return;
+  await TC.guide(TC.GUIDES.chinese);
   const cur=currentBook();
   setTimeout(()=>{ const msg=!BOOKS.some(passed)?'欢迎来到书院！先打开第一本书，不认识的字点一下就好。':(cur?`欢迎回来！今天读《${cur.t}》吧`:'书都读通啦，复习一下吧！'); panda(msg); say(msg); },700); })();
 </script>

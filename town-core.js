@@ -85,7 +85,7 @@ const ready=(async()=>{ try{ T=await kvGet('state'); }catch(e){ T=null; }
   if(!T) T=fresh();
   T.settings=Object.assign(fresh().settings,T.settings||{}); T.diary=T.diary||[]; T.notes=T.notes||[];
   if(T.settings.lang&&T.settings.lang!==LANG){ try{ localStorage.setItem('mlt_lang',T.settings.lang); }catch(e){} if(!T.settings.langSynced){ T.settings.langSynced=1; } }
-  await migrateSpelling(); return T; })();
+  await migrateSpelling(); tourInit(); return T; })();
 let saveTimer; function save(){ clearTimeout(saveTimer); saveTimer=setTimeout(()=>kvPut('state',T).catch(()=>{}),120); }
 function saveNow(){ clearTimeout(saveTimer); return kvPut('state',T); }
 
@@ -117,7 +117,7 @@ function tasksToday(){ const c=counts(), done=T.tasks[today()]||{};
     const pick=new Set([...focus,...rot].slice(0,MAX_TASKS)); keys=keys.filter(k=>pick.has(k)); }
   return keys.map(k=>({game:k, ...GAMES[k], need:c[k], done:Math.min(done[k]||0,c[k])})); }
 function allDone(){ const t=tasksToday(); return t.length>0 && t.every(x=>x.done>=x.need); }
-function taskDone(game){ const d=today(); const before=allDone(); T.tasks[d]=T.tasks[d]||{}; T.tasks[d][game]=(T.tasks[d][game]||0)+1;
+function taskDone(game){ tourMark(game); const d=today(); const before=allDone(); T.tasks[d]=T.tasks[d]||{}; T.tasks[d][game]=(T.tasks[d][game]||0)+1;
   let bonus=0, stamp=false; if(!before && allDone()){ bonus=TASK_BONUS; earn(bonus,'完成今天全部任务'); }
   save(); return { allDoneNow: !before && allDone(), bonus, stamp }; }
 // one stamp per finished spelling round, at most STAMPS_PER_EGG a day → at most one new friend a day
@@ -313,6 +313,107 @@ async function speak0(text,lang='zh-CN',rate=0.95,{interrupt=true,slow=false,kee
   if(VOICE_INDEX.has(k)){ const ok=await playFile(ROOT+'/配音/'+k+'.m4a',seq,slow||rate<0.7); if(ok||seq!==speakSeq) return; }
   if(seq!==speakSeq) return;
   return new Promise(res=>{ if(!('speechSynthesis' in window)) return res(); const u=new SpeechSynthesisUtterance(text); const v=voiceFor(lang); if(v){u.voice=v;u.lang=v.lang;} else u.lang=lang; u.rate=rate; u.onend=u.onerror=()=>res(); speechSynthesis.speak(u); setTimeout(res,15000); }); }
+/* ---------- newcomer tour + first-visit guides by each place's animal teacher ---------- */
+const TEACHERS={owl:{zh:'猫头鹰老师',en:'Ms Owl',img:'owl.webp'},panda:{zh:'熊猫先生',en:'Mr Panda',img:'panda.webp'},baker:{zh:'猫咪面包师',en:'Baker Cat',img:'baker.webp'},
+  squirrel:{zh:'松鼠店长',en:'Squirrel the shopkeeper',img:'teachers/squirrel.webp'},bunny:{zh:'兔兔姐姐',en:'Bunny',img:'teachers/bunny.webp'},puppy:{zh:'狗狗园长',en:'Puppy the park keeper',img:'teachers/puppy.webp'},
+  kangaroo:{zh:'袋鼠教练',en:'Coach Roo',img:'teachers/kangaroo.webp'},lamb:{zh:'小羊',en:'Little Lamb',img:'teachers/lamb.webp'},mayor:{zh:'大象镇长',en:'Mayor Elephant',img:'teachers/mayor.webp'}};
+const TOUR=[
+ {id:'spelling',who:'owl',zh:'去图书馆拼一组单词',en:'Spell one set of words at the Library'},
+ {id:'chinese',who:'panda',zh:'去书院读一本小书',en:'Read a little book at the Chinese School'},
+ {id:'math',who:'baker',zh:'去面包店做一轮点心',en:'Bake one round of treats at the Bakery'},
+ {id:'shop',who:'squirrel',zh:'在杂货店当一次小店员',en:'Work one shift at the Shop till'},
+ {id:'home',who:'bunny',zh:'去我的家看看衣柜',en:'Look in your wardrobe at My Home'},
+ {id:'park',who:'puppy',zh:'去宠物乐园看看动物朋友',en:'Visit your animal friends at the Pet Park'},
+ {id:'gym',who:'kangaroo',zh:'去健身房跟着练一次',en:'Do one workout at the Gym'},
+ {id:'diary',who:'lamb',zh:'去你的小屋看看',en:'Visit your room'}];
+const TOUR_CENTS=50;
+const GUIDES={
+ spelling:{key:'spelling',who:'owl',endZh:'开始拼写！',endEn:"Let's spell!",cards:[
+  {tzh:'欢迎来到图书馆！',ten:'Welcome to the Library!',zh:'在这里练习<b>英文拼写</b>。每次拼一组单词，拼完可以得到零花钱，还有一个小印章。',en:'Here you practise <b>English spelling</b>. Each round is one set of words. Finish it to earn pocket money and a stamp.'},
+  {tzh:'先准备好纸和笔',ten:'Get paper and a pencil',zh:'开始前，请准备好<b>一张纸和一支笔</b>。单词不是在屏幕上打字，而是要<b>写在纸上</b>。',en:'Before you start, get <b>a piece of paper and a pencil</b>. You do not type the words. You <b>write them on paper</b>.'},
+  {tzh:'听一听，写下来',ten:'Listen and write',zh:'点<b>喇叭</b>听单词，在纸上写下来，再点「I wrote it!」。听不清可以点「Slow」慢一点，或者点「Show sentence」看例句。',en:'Tap the <b>speaker</b> to hear a word, write it on your paper, then tap "I wrote it!". Tap "Slow" or "Show sentence" if you need help.'},
+  {tzh:'最后核对答案',ten:'Check your answers',zh:'一组写完，屏幕上会出现正确的拼写。把纸放在旁边，<b>一个字母一个字母地核对</b>。写错的单词，再在纸上改写一遍。',en:'When the set is done, the right spellings appear. Put your paper next to the screen and <b>check every letter</b>. Write any wrong word again.'}]},
+ chinese:{key:'chinese',who:'panda',endZh:'去读书！',endEn:"Let's read!",cards:[
+  {tzh:'欢迎来到书院！',ten:'Welcome to the Chinese School!',zh:'书墙上有一本本中文小书。<b>读通一本，下一本才会打开</b>。',en:'The bookshelf is full of little Chinese books. <b>Finish one book to unlock the next.</b>'},
+  {tzh:'先听故事',ten:'Listen to the story',zh:'打开书，点「听故事」听一遍。<b>不认识的字点一下</b>，它会变红。',en:'Open a book and tap "Listen" to hear the story. <b>Tap any character you don\'t know</b> and it turns red.'},
+  {tzh:'学字，再玩小游戏',ten:'Learn, then play',zh:'我会用图片、拼音和例句教你认这些字，然后玩几个小游戏测一测。',en:'I will teach you those characters with a picture, pinyin and a sentence. Then a few little games check what you remember.'},
+  {tzh:'读通拿奖励',ten:'Earn a reward',zh:'小测验通过就算读通啦，可以得到零花钱。以后我还会提醒你复习学过的字。',en:'Pass the little test to finish the book and earn pocket money. Later I will remind you to review old characters.'}]},
+ math:{key:'math',who:'baker',endZh:'开店啦！',endEn:'Open the shop!',cards:[
+  {tzh:'欢迎来到面包店！',ten:'Welcome to the Bakery!',zh:'我们一起做点心卖给客人，要用<b>数学</b>帮忙哦。',en:'Let\'s bake treats for our customers. We need <b>maths</b> to help!'},
+  {tzh:'看订单',ten:'Read the order',zh:'客人会点单，比如「每盘 5 个，要 3 盘」。数一数、算一算，一共要做多少个。',en:'A customer orders, for example "5 on each tray, 3 trays". Count and work out how many to bake.'},
+  {tzh:'输入答案',ten:'Type the answer',zh:'用数字键盘输入答案，再按 ✓。算错了没关系，我会陪你一起数。',en:'Type your answer on the number pad and press ✓. If it is wrong, that\'s OK, we will count together.'},
+  {tzh:'赚零花钱',ten:'Earn pocket money',zh:'一轮订单做完，就能得到零花钱。做得越准，钱越多！',en:'Finish a round of orders to earn pocket money. The more you get right, the more you earn!'}]},
+ shop:{key:'shop',who:'squirrel',endZh:'知道啦！',endEn:'Got it!',cards:[
+  {tzh:'欢迎来到杂货店！',ten:'Welcome to the Shop!',zh:'这里可以<b>买东西</b>，也可以<b>当小店员赚钱</b>。',en:'Here you can <b>buy things</b> or <b>work as a shop helper</b> to earn money.'},
+  {tzh:'当小店员',ten:'Work at the till',zh:'点<b>收银台</b>去打工：客人来买东西，你来算一共多少钱、要找多少零钱。',en:'Tap the <b>till</b> to work: customers buy things, and you work out the total and the change.'},
+  {tzh:'用自己挣的钱买',ten:'Spend what you earn',zh:'衣服、饰品和小动物用品都要用自己挣的零花钱买。钱不够？再去打工吧！',en:'Clothes, jewellery and pet things cost pocket money you have earned. Not enough? Do another shift!'}]},
+ home:{key:'home',who:'bunny',endZh:'好的！',endEn:'OK!',cards:[
+  {tzh:'欢迎回家！',ten:'Welcome home!',zh:'这里有你的<b>衣柜</b>和<b>首饰盒</b>。',en:'This is your <b>wardrobe</b> and <b>jewellery box</b>.'},
+  {tzh:'换衣服',ten:'Change clothes',zh:'点一件衣服就能换上，小镇地图上的你也会穿上它。新衣服可以去杂货店买。',en:'Tap an outfit to put it on. You will wear it on the town map too. Buy new clothes at the Shop.'},
+  {tzh:'戴饰品',ten:'Wear jewellery',zh:'买来的饰品放在首饰盒里，点一下戴上，再点一下摘下。',en:'Jewellery you buy goes in the box. Tap to put it on, tap again to take it off.'}]},
+ park:{key:'park',who:'puppy',endZh:'去看看！',endEn:"Let's look!",cards:[
+  {tzh:'欢迎来到宠物乐园！',ten:'Welcome to the Pet Park!',zh:'你的<b>动物朋友</b>都住在这里。点一点它们，和它们打个招呼吧。',en:'Your <b>animal friends</b> live here. Tap them to say hello.'},
+  {tzh:'集印章，孵新朋友',ten:'Collect stamps, hatch a friend',zh:'在图书馆每拼完一组单词，就能得到一个<b>印章</b>。集满印章可以<b>孵一个蛋</b>，认识一个新朋友！',en:'Each set of words you spell at the Library gives you a <b>stamp</b>. Fill the card to <b>hatch an egg</b> and meet a new friend!'},
+  {tzh:'布置乐园',ten:'Decorate the park',zh:'在杂货店买的小动物用品，会放进乐园里。',en:'Pet things you buy at the Shop will appear in the park.'}]},
+ gym:{key:'gym',who:'kangaroo',endZh:'动起来！',endEn:"Let's move!",cards:[
+  {tzh:'欢迎来到健身房！',ten:'Welcome to the Gym!',zh:'跟着我一起动一动，身体会越来越棒。',en:'Move along with me and get stronger every day.'},
+  {tzh:'先找一块空地',ten:'Find some space',zh:'开始前，看看周围有没有足够的空地，<b>别撞到桌子和椅子</b>哦。',en:'Before you start, make sure you have room to move. <b>Watch out for tables and chairs!</b>'},
+  {tzh:'跟着做',ten:'Follow along',zh:'选好每个动作做几秒、做几轮，点「开始跟练」。屏幕上出现什么动作，就跟着做。',en:'Choose how many seconds and rounds, then tap "Start". Copy each move on the screen.'},
+  {tzh:'学会新本领',ten:'Learn new skills',zh:'练得越多，「我的本领」里会点亮越多新动作。',en:'The more you practise, the more moves light up in "My skills".'}]},
+ diary:{key:'diary',who:'lamb',endZh:'写日记吧',endEn:"Let's write",cards:[
+  {tzh:'这是你的小屋',ten:'This is your room',zh:'每天的游戏时间用完后，回到这里<b>写一篇日记</b>，记下今天的心情和发生的事。',en:'When your play time is up each day, come here to <b>write a diary page</b> about your day and how you feel.'},
+  {tzh:'写好后你来决定',ten:'You decide who reads it',zh:'写完以后你可以选：给爸爸妈妈看，还是<b>只给自己看</b>。',en:'When you finish, you choose: share it with Mum and Dad, or keep it <b>just for you</b>.'},
+  {tzh:'枕头上的信',ten:'Letters on your pillow',zh:'爸爸妈妈有时会给你回信，信会放在<b>枕头上</b>，点一下就能拆开。',en:'Sometimes Mum or Dad write back. The letter waits <b>on your pillow</b>. Tap it to open.'},
+  {tzh:'晚安',ten:'Good night',zh:'写完日记说「晚安」，今天的小镇时间就结束啦，明天再来玩。',en:'Say "Good night" after your diary, and town time is over for today. See you tomorrow!'}]},
+ town:{key:'town',who:'mayor',endZh:'出发！',endEn:"Let's go!",cards:[
+  {tzh:'欢迎来到动物小镇！',ten:'Welcome to My Little Town!',zh:'我是大象镇长。小镇里每座房子都是一个游戏，<b>点房子就能进去</b>。',en:'I am Mayor Elephant. Every building is a game. <b>Tap a building to go in.</b>'},
+  {tzh:'新手任务',ten:'Newcomer tasks',zh:'先完成<b>新手任务</b>：每个地方都去玩一次，每完成一个得 $0.50，全部完成还送你一件漂亮的饰品！',en:'First, try the <b>newcomer tasks</b>: play each place once. Each one earns $0.50, and finishing them all wins a pretty accessory!'},
+  {tzh:'每个地方都有老师',ten:'A teacher in every place',zh:'第一次进去时，那里的动物老师会告诉你怎么玩。忘了的话，点右下角的 <b>?</b> 再听一遍。',en:'The first time you go in, an animal teacher explains how to play. Forgot? Tap the <b>?</b> button to hear it again.'},
+  {tzh:'每日任务',ten:'Daily tasks',zh:'以后每天还会有几个小任务，看左上角的「今日任务」。',en:'Every day there are a few little tasks too. Look for "Today\'s Tasks" at the top.'}]}};
+
+function tourInit(){ if(T.tour) return; const veteran=Object.keys(T.tasks||{}).length>0||(T.diary||[]).length>0||Object.keys((T.zh&&T.zh.books)||{}).length>0||((T.bake&&T.bake.sessions)||[]).length>0;
+  T.tour=veteran?{skip:true}:{start:today(),done:{}}; save(); }
+function tourActive(){ return !!(T&&T.tour&&!T.tour.skip&&!T.tour.finished); }
+function tourMark(id){ if(!tourActive()||T.tour.done[id]) return false; const t=TOUR.find(x=>x.id===id); if(!t) return false;
+  T.tour.done[id]=today(); earn(TOUR_CENTS,'新手任务：'+t.zh); T.tour.just=id;
+  if(TOUR.every(x=>T.tour.done[x.id])){ T.tour.finished=today(); T.tour.prize=1; } save(); return true; }
+function teacherImg(who){ const t=TEACHERS[who]||TEACHERS.owl; return ROOT+'/assets/'+t.img; }
+function teacherName(who){ const t=TEACHERS[who]||TEACHERS.owl; return L(t.zh,t.en); }
+function guideCss(){ if(document.getElementById('tc-guide-css')) return; const s=document.createElement('style'); s.id='tc-guide-css'; s.textContent=`
+#tc-guide{position:fixed;inset:0;z-index:2147482000;background:rgba(48,36,60,.45);display:flex;align-items:center;justify-content:center;padding:18px;font-family:ui-rounded,"SF Pro Rounded","PingFang SC",system-ui,sans-serif;color:#3B3049;animation:tcgIn .25s}
+@keyframes tcgIn{from{opacity:0}}
+#tc-guide .wrap{display:flex;align-items:flex-end;gap:6px;max-width:860px;width:100%}
+#tc-guide .who{flex:0 0 auto;height:min(62vh,400px);animation:tcgBob 2.6s ease-in-out infinite;filter:drop-shadow(0 10px 14px rgba(0,0,0,.25))}
+@keyframes tcgBob{50%{transform:translateY(-8px) rotate(-1.5deg)}}
+#tc-guide .bub{position:relative;flex:1;background:#FFF8EE;border-radius:28px;padding:24px 28px 20px;box-shadow:0 12px 40px rgba(0,0,0,.25);margin-bottom:8vh;min-height:220px;display:flex;flex-direction:column}
+#tc-guide .bub:before{content:'';position:absolute;left:-16px;bottom:46px;border:16px solid transparent;border-right-color:#FFF8EE;border-left:0}
+#tc-guide .nm{font-size:15px;font-weight:900;color:#B07A3C;letter-spacing:.03em}
+#tc-guide .ttl{font-size:26px;font-weight:900;margin:4px 0 8px}
+#tc-guide .tx{font-size:20px;line-height:1.55;flex:1}
+#tc-guide .tx b{color:#E2664A}
+#tc-guide .ft{display:flex;align-items:center;gap:10px;margin-top:16px}
+#tc-guide .dots{flex:1;display:flex;gap:6px}#tc-guide .dots i{width:10px;height:10px;border-radius:50%;background:#E8DCCD}#tc-guide .dots i.on{background:#E2664A}
+#tc-guide button{font:inherit;font-weight:900;font-size:19px;border:none;border-radius:999px;padding:12px 24px;cursor:pointer}
+#tc-guide .nx{background:#FF8A6B;color:#fff;box-shadow:0 4px 0 #D96A4C}#tc-guide .bk{background:#F1EAE2;color:#6B5A48}#tc-guide .sk{background:none;color:#8A7F99;font-size:15px;padding:8px 10px}
+#tc-help{position:fixed;bottom:14px;z-index:8999;width:52px;height:52px;border-radius:50%;border:none;background:rgba(255,255,255,.95);box-shadow:0 4px 0 rgba(0,0,0,.08),0 4px 14px rgba(0,0,0,.12);font:900 26px ui-rounded,system-ui;color:#B07A3C;cursor:pointer}
+`; document.head.appendChild(s); }
+// cards: [{zh,en,tzh,ten}] ; returns a promise when the child closes it
+function guideShow(def){ return new Promise(res=>{ guideCss(); document.getElementById('tc-guide')?.remove(); let i=0; const d=document.createElement('div'); d.id='tc-guide';
+  const n=def.cards.length; const draw=()=>{ const c=def.cards[i];
+    d.innerHTML=`<div class="wrap"><img class="who" src="${teacherImg(def.who)}" alt=""><div class="bub"><div class="nm">${teacherName(def.who)}</div><div class="ttl">${L(c.tzh,c.ten)}</div><div class="tx">${L(c.zh,c.en)}</div>
+      <div class="ft"><div class="dots">${def.cards.map((_,k)=>`<i class="${k===i?'on':''}"></i>`).join('')}</div>${i>0?`<button class="bk">${L('上一步','Back')}</button>`:`<button class="sk">${L('跳过','Skip')}</button>`}<button class="nx">${i<n-1?L('下一步 →','Next →'):L(def.endZh||'开始玩！',def.endEn||"Let's play!")}</button></div></div></div>`;
+    stopSpeech(); const plain=s=>s.replace(/<[^>]+>/g,''); if(LANG==='en') speak(plain(c.ten)+'. '+plain(c.en),'en-NZ',0.95); else speakZh(plain(c.tzh)+'。'+plain(c.zh),{keepZh:true});
+    d.querySelector('.nx').onclick=()=>{ if(i<n-1){ i++; draw(); } else close(); };
+    const bk=d.querySelector('.bk'); if(bk) bk.onclick=()=>{ i--; draw(); };
+    const sk=d.querySelector('.sk'); if(sk) sk.onclick=close; };
+  const close=()=>{ stopSpeech(); d.remove(); if(def.key&&T){ T.guideSeen=T.guideSeen||{}; T.guideSeen[def.key]=today(); save(); } res(); };
+  document.body.appendChild(d); draw(); }); }
+// first visit: show automatically (not for veterans); always add a "?" button to replay
+function guide(def,{auto=true,btn=true}={}){ guideCss();
+  if(btn&&!document.getElementById('tc-help')){ const b=document.createElement('button'); b.id='tc-help'; b.textContent='?'; b.title=L('怎么玩','How to play'); b.setAttribute('aria-label','How to play');
+    const left=document.documentElement.dataset.musPos==='left'; b.style[left?'left':'right']='76px'; b.onclick=()=>guideShow(def); document.body.appendChild(b); }
+  const seen=T&&T.guideSeen&&T.guideSeen[def.key]; const vet=T&&T.tour&&T.tour.skip;
+  if(auto&&!seen&&!vet) return guideShow(def); return Promise.resolve(); }
 /* ---------- background music: one looping track per place (assets/music/<name>.mp3) ---------- */
 let BG=null, BGname=null, duckN=0, bgWant=null;
 function musicOn(){ return T&&T.settings&&T.settings.music!==false; }
@@ -452,6 +553,6 @@ async function backupImport(file){
   try{ for(const [k,v] of Object.entries(data.ls||{})) localStorage.setItem(k,v); }catch(e){}
   return data;
 }
-window.TownCore = { offlineStatus, offlineDownload, ONLINE_SITE, backupExport, backupImport, diaryOpen, icon, ico, bgm, setMusic, musicOn, musicVol, setArea, addStamp, stampsToward, hatchShow, ready, get state(){ return T; }, save, saveNow, today, fmt, earn, spend, GAMES, GOALS, tasksToday, allDone, taskDone, eggsAvailable, STAMPS_PER_EGG,
+window.TownCore = { GUIDES, TOUR, TEACHERS, tourActive, tourMark, teacherImg, teacherName, guide, guideShow, offlineStatus, offlineDownload, ONLINE_SITE, backupExport, backupImport, diaryOpen, icon, ico, bgm, setMusic, musicOn, musicVol, setArea, addStamp, stampsToward, hatchShow, ready, get state(){ return T; }, save, saveNow, today, fmt, earn, spend, GAMES, GOALS, tasksToday, allDone, taskDone, eggsAvailable, STAMPS_PER_EGG,
   startTimer, usedSec, limitSec, remainingSec, overtime, guard, afterReward, showNight, showBanner, askPin, parentPass, lang, setLang, L, trText, speak, speakZh, speakEn, stopSpeech, voiceKey, animalStyle, ROOT };
 })();

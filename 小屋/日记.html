@@ -253,7 +253,7 @@ function openLetters(){ const list=(T.notes||[]).slice().reverse();
 
 /* ---------- boot ---------- */
 let petId=0;
-(async()=>{ T=await TC.ready; T.diary=T.diary||[]; T.notes=T.notes||[];
+(async()=>{ T=await TC.ready; T.diary=T.diary||[]; T.notes=T.notes||[]; TC.tourMark('diary'); setTimeout(()=>TC.guide(TC.GUIDES.diary),1500);
   const h=new Date().getHours()*60+new Date().getMinutes();
   if(!TC.diaryOpen()){ dayMode(); return; }
   const pool=T.animals.length?T.animals:[0]; petId=pool[Math.floor((Date.now()/864e5))%pool.length];

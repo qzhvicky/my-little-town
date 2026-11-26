@@ -556,6 +556,7 @@ function openParent(){ go('parent'); const last=B.sessions.slice(-10); const ite
   TC.startTimer(); go('home');
   if(location.hash==='#parent'){ history.replaceState(null,'',location.pathname); if(await TC.parentPass()){ openParent(); return; } }
   if(TC.guard()) return;
+  await TC.guide(TC.GUIDES.math);
   setTimeout(()=>{ const m=B.sessions.length?'欢迎回来，小店长！今天也有好多客人哦':'欢迎来到面包店！我是猫店长，今天你来帮我卖点心吧！'; baker(m); say(m); },700); })();
 </script>
 </body>

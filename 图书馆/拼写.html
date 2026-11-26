@@ -176,6 +176,7 @@ html,body{background:#E8D9BF url(../assets/library_bg.jpg) center/cover no-repea
   #print .cal{max-width:420px}
 }
 @media (max-width:700px){#check .split{flex-direction:column}#check .left{min-height:38vh}.numbadge{font-size:80px}.speak{width:160px;height:160px;font-size:64px}}
+.paperTip{background:#FFF3D6;border:2px dashed #E8B65A;border-radius:16px;padding:10px 16px;font-size:18px;font-weight:700;color:#6B4E1E;max-width:560px;text-align:center;line-height:1.45}.paperTip .tci{width:24px;height:24px;vertical-align:-5px}
 </style>
 </head>
 <body>
@@ -192,6 +193,7 @@ html,body{background:#E8D9BF url(../assets/library_bg.jpg) center/cover no-repea
     <div class="pals" id="homePals"></div>
     <h1 id="hello">Hi there!</h1>
     <div class="goal"><span id="goalText">Today's goal</span><span class="stars" id="goalStars"></span></div>
+    <div class="paperTip" id="paperTip"></div>
     <button class="big coral" id="startBtn" style="font-size:30px;padding:24px 60px">Let's spell!</button>
     <div class="col center" style="gap:6px">
       <small class="muted" id="pawHint" style="font-size:18px;font-weight:700"></small>
@@ -726,9 +728,10 @@ function pSettings(){ loadVoices(); const vs=voices;
   S.settings=Object.assign(freshState().settings,S.settings||{}); S.settings.sources=Object.assign({BOOK:true,T1:true,T2:true,T3:true,T4:true},S.settings.sources); ['NZ1','NZ2','NZ3','NZ4','UK2'].forEach(k=>delete S.settings.sources[k]); if(!S.level) S.level=2;
   mergeBuiltins(); save();
   if(navigator.storage&&navigator.storage.persist) navigator.storage.persist().catch(()=>{});
-  await TC.ready; TC.startTimer(); go('home');
+  await TC.ready; TC.startTimer(); { const pt=document.getElementById('paperTip'); if(pt) pt.innerHTML=TC.icon('pencil')+' '+TC.L('先准备好<b>纸和笔</b>：听到单词就写在纸上，写完一组再一起核对答案。','Get <b>paper and a pencil</b> ready: write each word on paper when you hear it, then check your answers at the end.'); } go('home');
   if(location.hash==='#parent'){ history.replaceState(null,'',location.pathname); if(await TC.parentPass()){ go('parent'); return; } }
   if(TC.guard()) return;
+  TC.guide(TC.GUIDES.spelling);
 })();
 </script>
 <img id="owl" src="../assets/owl.webp" alt="Miss Owl" onerror="this.remove()"><div id="owlSay"></div>
