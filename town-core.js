@@ -18,6 +18,32 @@
       return el; };
     window.Audio.prototype=OA.prototype; }
 })();
+/* ---------- phones: the town is drawn for a landscape tablet, so widen the layout viewport to fit a small screen ---------- */
+(function(){
+  const mv=document.querySelector('meta[name=viewport]'); if(!mv) return;
+  const base=mv.getAttribute('content'); const MIN_H=720;
+  const coarse=matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>0;
+  const phone=()=>coarse&&Math.min(screen.width,screen.height)<600;
+  let cur=null, lastLand=null;
+  function fit(){ if(!phone()) return;
+    const land=innerWidth>innerHeight; lastLand=land;
+    let want=base;
+    if(land){ const longSide=Math.max(screen.width,screen.height); const w=Math.max(longSide,Math.ceil(MIN_H*innerWidth/innerHeight)); want='width='+w+', viewport-fit=cover'; }
+    if(want!==cur){ cur=want; mv.setAttribute('content',want); }
+    rotateCover(!land); }
+  function rotateCover(show){ let d=document.getElementById('tc-rotate');
+    if(!show){ if(d) d.remove(); return; } if(d||!document.body) return;
+    const zh=(()=>{ try{ return (localStorage.getItem('mlt_lang')||'en')==='zh'; }catch(e){ return false; } })();
+    d=document.createElement('div'); d.id='tc-rotate';
+    d.innerHTML='<div style="font-size:64px;line-height:1;animation:tcrot 2s ease-in-out infinite">📱</div><div style="font-size:22px;font-weight:900;margin:18px 0 10px">'+(zh?'请把手机横过来玩':'Please turn your phone sideways')+'</div><div style="font-size:14px;opacity:.8;max-width:280px;line-height:1.5">'+(zh?'如果画面没有跟着转，请在控制中心关掉「竖排方向锁定」。':'If the screen does not turn, switch off Portrait Orientation Lock in Control Centre.')+'</div>';
+    d.style.cssText='position:fixed;inset:0;z-index:2147483000;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;padding:24px;background:linear-gradient(160deg,#FFE9D6,#E6F4DA);color:#3B3049;font-family:ui-rounded,"PingFang SC",system-ui,sans-serif';
+    if(!document.getElementById('tc-rot-css')){ const s=document.createElement('style'); s.id='tc-rot-css'; s.textContent='@keyframes tcrot{0%,30%{transform:rotate(0)}60%,100%{transform:rotate(-90deg)}}'; document.head.appendChild(s); }
+    document.body.appendChild(d); }
+  fit();
+  addEventListener('orientationchange',()=>setTimeout(fit,300));
+  let t; addEventListener('resize',()=>{ clearTimeout(t); t=setTimeout(()=>{ if(phone()&&(innerWidth>innerHeight)!==lastLand) fit(); },250); });
+  window.__fitPhone=fit;
+})();
 /* ---------- offline (website only): service worker + downloadable offline pack ---------- */
 const ONLINE_SITE=/^https?:/.test(location.protocol)&&('serviceWorker' in navigator);
 (function(){
@@ -359,7 +385,7 @@ async function offlineDownload(onProg){
 
 /* tip on touch devices held upright: the town is designed for landscape */
 (()=>{ const coarse=matchMedia('(pointer:coarse)').matches||navigator.maxTouchPoints>1; if(!coarse) return;
-  const tip=()=>{ const old=document.getElementById('tc-rot'); if(old) old.remove(); if(innerHeight<=innerWidth) return;
+  const tip=()=>{ const old=document.getElementById('tc-rot'); if(old) old.remove(); if(innerHeight<=innerWidth||Math.min(screen.width,screen.height)<600) return;
     const d=document.createElement('div'); d.id='tc-rot'; d.textContent=(typeof LANG!=='undefined'&&LANG==='zh')?'把 iPad 横过来玩，画面更大更清楚 ↻':'Turn the iPad sideways for a bigger picture ↻';
     d.style.cssText='position:fixed;left:50%;top:14px;transform:translateX(-50%);z-index:99999;background:rgba(40,30,50,.85);color:#fff;font:600 16px/1.3 system-ui,sans-serif;padding:10px 18px;border-radius:20px;pointer-events:none;transition:opacity .6s';
     document.body.appendChild(d); setTimeout(()=>{ d.style.opacity='0'; setTimeout(()=>d.remove(),700); },4500); };

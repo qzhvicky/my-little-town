@@ -162,7 +162,7 @@ function place(){ const r=sceneRect(); const c=$('#sky'); c.style.left=WIN.x*100
 addEventListener('resize',place);
 let twinkleT=0;
 function consState(n=T.diary.length){ const idx=Math.floor(n/STARS_PER), lit=n%STARS_PER; return {idx, cons:CONS[idx%CONS.length], lit, done:idx}; }
-function drawSky(extraGlow){ const c=$('#sky'), x=c.getContext('2d'); const W=c.width,H=c.height; x.clearRect(0,0,W,H);
+function drawSky(extraGlow){ if(!T) return; const c=$('#sky'), x=c.getContext('2d'); const W=c.width,H=c.height; x.clearRect(0,0,W,H);
   const {cons,lit}=consState(); const P=cons.p.map(([a,b])=>[a*W,b*H]);
   x.lineWidth=Math.max(1.5,W/180); x.strokeStyle='rgba(255,236,170,.55)'; x.setLineDash([W/60,W/90]);
   cons.e.forEach(([a,b])=>{ if(a<lit&&b<lit){ x.beginPath(); x.moveTo(...P[a]); x.lineTo(...P[b]); x.stroke(); } });

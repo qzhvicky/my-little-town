@@ -43,7 +43,7 @@ h1{font-size:40px;margin:0;font-weight:900}
 .mode small{display:block;font-weight:700;color:var(--soft);font-size:13px;margin-top:2px}
 .mode.soon{opacity:.5}
 /* play */
-#stageWrap{width:min(1000px,76vw);margin:0 auto;padding:26px 26px 26px}
+#stageWrap{width:min(1000px,76vw);margin:0 auto;padding:26px 26px 26px;max-height:calc(100vh - 70px);overflow-y:auto;overscroll-behavior:contain}
 .order{display:flex;align-items:center;gap:16px;background:#FFF;border-radius:22px;padding:12px 18px;box-shadow:0 4px 0 #F0D6CA;max-width:820px}
 .order .cust{width:84px;height:84px;border-radius:50%;background:#FFF;box-shadow:0 0 0 4px #FCE3EA;position:relative;overflow:hidden;flex:none}
 .order .cust i{position:absolute;inset:0;background-repeat:no-repeat}
@@ -242,7 +242,7 @@ async function askAnswer(label,correct){ window.__ans=correct;
     if(v===correct){ burst(innerWidth/2,innerHeight/2,['cupcake','star','sparkle','cupcake']); say(['对啦！','做对了！','太棒了！'][tries?0:Math.floor(Math.random()*3)]); await sleep(700); return {firstOk:first, ms}; }
     first=false; $('#ansBox').classList.add('shake'); say('再数一数哦'); await sleep(500);
     if(tries>=1) $('#hintArea').innerHTML=`<div class="hint">提示：${hintFor(correct)}</div>`;
-    if(tries>=2){ $('#hintArea').innerHTML=`<div class="hint">答案是 <b style="color:var(--pink-d);font-size:26px">${correct}</b>，我们记住它！</div>`; say(`答案是${correct}`); await sleep(2200); return {firstOk:false, ms}; }
+    if(tries>=2){ $('#hintArea').innerHTML=`<div class="hint">${L('答案是','The answer is')} <b style="color:var(--pink-d);font-size:26px">${correct}</b>${L('，我们记住它！','. Let\'s remember it!')}</div>`; say(L(`答案是${correct}`,`The answer is ${correct}`)); await sleep(2200); return {firstOk:false, ms}; }
   } }
 let hintFor=()=>'';
 
@@ -278,8 +278,8 @@ async function answerPad(label,correct,{onBeforeOk,hint}){ window.__ans=correct;
     const v=await numPad(); const ms=Date.now()-t0;
     if(v===correct){ $('#pad').style.pointerEvents='none'; if(onBeforeOk) await onBeforeOk(); burst(innerWidth*.7,innerHeight/2,['cupcake','star','sparkle','cupcake']); say(['对啦！','做对了！','太棒了！'][Math.floor(Math.random()*3)]); await sleep(900); return {firstOk:wrongs===0, ms}; }
     wrongs++; $('#ansBox').classList.add('shake'); say('再想一想哦'); await sleep(500);
-    $('#hintArea').innerHTML=`<div class="hint">${wrongs>=2?`答案是 <b style="color:var(--pink-d);font-size:26px">${correct}</b>，左边一起数一数！`:hint}</div>`;
-    if(wrongs>=2){ say(`答案是${correct}`); if(onBeforeOk) await onBeforeOk(); $('#ansArea').innerHTML=`<button class="big mint" id="gotIt">${L('我看懂了 →','Got it →')}</button>`; await new Promise(r=>$('#gotIt').onclick=r); return {firstOk:false, ms}; } } }
+    $('#hintArea').innerHTML=`<div class="hint">${wrongs>=2?`${L('答案是','The answer is')} <b style="color:var(--pink-d);font-size:26px">${correct}</b>${L('，左边一起数一数！','. Let\'s count them together on the left!')}`:hint}</div>`;
+    if(wrongs>=2){ say(L(`答案是${correct}`,`The answer is ${correct}`)); if(onBeforeOk) await onBeforeOk(); $('#ansArea').innerHTML=`<button class="big mint" id="gotIt">${L('我看懂了 →','Got it →')}</button>`; await new Promise(r=>$('#gotIt').onclick=r); return {firstOk:false, ms}; } } }
 
 /* ---------- order 1: tray (multiplication) ---------- */
 async function trayOrder(k,c){ const [rows,per]=k.split('x').map(Number); const tr=TREATS[per]||[tt(1),'点心']; const total=rows*per;
@@ -298,7 +298,7 @@ async function trayOrder(k,c){ const [rows,per]=k.split('x').map(Number); const 
   slots.forEach(x=>x.onclick=()=>fill(x));
   $('#addRow').onclick=()=>{ const first=slots.find(x=>!x.classList.contains('on')); if(!first) return; const r=Math.floor(+first.dataset.i/per); slots.slice(r*per,r*per+per).forEach(x=>{ if(!x.classList.contains('on')) fill(x,false); }); say(String((r+1)*per)); };
   const fillRest=async()=>{ const src=$('#src'); for(const x of slots){ if(x.classList.contains('on')) continue; fly(src,x,tr[0],320); await sleep(total>40?25:60); x.innerHTML=tr[0]; x.classList.add('on'); placed++; refresh(); } await sleep(380); };
-  const r=await answerPad('一共',total,{onBeforeOk:fillRest,hint:`${per} 个一数：${Array.from({length:rows},(_,i)=>(i+1)*per).join('、')}`});
+  const r=await answerPad('一共',total,{onBeforeOk:fillRest,hint:L(`${per} 个一数：${Array.from({length:rows},(_,i)=>(i+1)*per).join('、')}`,`Count by ${per}s: ${Array.from({length:rows},(_,i)=>(i+1)*per).join(', ')}`)});
   return {k, ok:r.firstOk, ms:r.ms, mode: placed===0?'quick':'build'}; }
 
 /* ---------- order 2: boxes (division) ---------- */
