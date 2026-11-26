@@ -771,17 +771,20 @@ function playIntro(){ return new Promise(res=>{ const el=$('#intro'); let seen=f
 /* ---------- first-time setup: language, name, age ---------- */
 const SETUP_AGE={5:{sp:1,tb:[2,10],seed:false,tl:1,shop:1},6:{sp:1,tb:[2,5,10],seed:false,tl:1,shop:1},7:{sp:2,tb:[2,5,10],seed:true,tl:1,shop:1},8:{sp:3,tb:[2,5,10,3,4],seed:true,tl:2,shop:2},9:{sp:3,tb:[2,5,10,3,4,6],seed:true,tl:3,shop:2},10:{sp:4,tb:[2,5,10,3,4,6,7,8,9],seed:true,tl:4,shop:3}};
 function runSetup(){ return new Promise(res=>{ if(T.setupDone||window.__skipSetup) return res(); const box=$('#setup'), card=$('#setupCard'); let step=0; const ans={lang:TC.lang(),name:T.childName||'',age:7};
-  const dots=n=>`<div class="dots">${[0,1,2].map(i=>`<i class="${i===n?'on':''}"></i>`).join('')}</div>`;
+  const dots=n=>`<div class="dots">${[0,1,2,3].map(i=>`<i class="${i===n?'on':''}"></i>`).join('')}</div>`;
   const draw=()=>{ if(step===0){ card.innerHTML=`<div style="font-size:64px">${TC.icon('home','big')}</div><h2>Welcome to My Little Town!</h2><div class="sub">欢迎来到动物小镇！ Which language do you like?</div>
       <div class="opts"><div class="opt" data-l="en">English<small>Instructions in English</small></div><div class="opt" data-l="zh">中文<small>提示用中文</small></div></div>${dots(0)}`;
       card.querySelectorAll('[data-l]').forEach(b=>b.onclick=()=>{ ans.lang=b.dataset.l; step=1; draw(); }); TC.speak('Welcome to My Little Town! Which language do you like?','en-NZ'); }
     else if(step===1){ const en=ans.lang==='en'; card.innerHTML=`<div style="font-size:64px">${TC.icon('pencil','big')}</div><h2>${en?"What's your name?":'你叫什么名字？'}</h2><div class="sub">${en?'The animals will call you this.':'小镇的动物们会这样叫你。'}</div>
       <input id="nm" value="${esc(ans.name)}" maxlength="16"><div style="margin-top:20px"><button class="big coral" id="nx">${en?'Next →':'下一步 →'}</button></div>${dots(1)}`;
       $('#nm').focus(); $('#nx').onclick=()=>{ ans.name=$('#nm').value.trim()||TC.L('小朋友','friend'); step=2; draw(); }; TC.speak(en?"What's your name?":'你叫什么名字？',en?'en-NZ':'zh-CN'); }
-    else { const en=ans.lang==='en'; card.innerHTML=`<div style="font-size:64px">${TC.icon('cupcake','big')}</div><h2>${en?`How old are you, ${esc(ans.name)}?`:`${esc(ans.name)}，你几岁啦？`}</h2><div class="sub">${en?'So the games start at the right level.':'这样游戏会从合适的难度开始。'}</div>
+    else if(step===2){ const en=ans.lang==='en'; card.innerHTML=`<div style="font-size:64px">${TC.icon('cupcake','big')}</div><h2>${en?`How old are you, ${esc(ans.name)}?`:`${esc(ans.name)}，你几岁啦？`}</h2><div class="sub">${en?'So the games start at the right level.':'这样游戏会从合适的难度开始。'}</div>
       <div class="opts">${[5,6,7,8,9,10].map(a=>`<div class="opt" data-a="${a}">${a}${a===10?'+':''}</div>`).join('')}</div>${dots(2)}`;
-      card.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ ans.age=+b.dataset.a; finish(); }); TC.speak(en?`How old are you, ${ans.name}?`:`${ans.name}，你几岁啦？`,en?'en-NZ':'zh-CN'); } };
-  const finish=async()=>{ const P=SETUP_AGE[ans.age]; T.childName=ans.name; T.settings.age=ans.age; T.setupDone=TC.today();
+      card.querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>{ ans.age=+b.dataset.a; step=3; draw(); }); TC.speak(en?`How old are you, ${ans.name}?`:`${ans.name}，你几岁啦？`,en?'en-NZ':'zh-CN'); }
+    else { const en=ans.lang==='en'; card.innerHTML=`<div style="font-size:64px">${TC.icon('book','big')}</div><h2>${en?'Do you know any Chinese characters?':'你认识汉字吗？'}</h2><div class="sub">${en?'For the Chinese School. A grown-up can help answer.':'书院会从合适的书开始。可以请爸爸妈妈帮你选。'}</div>
+      <div class="opts"><div class="opt" data-z="starter">${en?'Not yet':'还不认识'}<small>${en?'Start with the starter books':'从启蒙小书开始'}</small></div><div class="opt" data-z="book1">${en?'Yes, some':'认识一些'}<small>${en?'I can read simple stories':'能读简单的小故事'}</small></div></div>${dots(3)}`;
+      card.querySelectorAll('[data-z]').forEach(b=>b.onclick=()=>{ ans.zh=b.dataset.z; finish(); }); TC.speak(en?'Do you know any Chinese characters?':'你认识汉字吗？',en?'en-NZ':'zh-CN'); } };
+  const finish=async()=>{ const P=SETUP_AGE[ans.age]; T.childName=ans.name; T.settings.age=ans.age; T.setupDone=TC.today(); if(ans.zh) T.zhStart=ans.zh;
     if(!T.bake){ T.bake={facts:{},tables:P.tb.slice(),treats:[],sessions:[],time:{lv:P.tl,streak:0},frac:{lv:1,streak:0},seeded:!P.seed}; }
     if(!T.shopSetByAge){ T.settings.shopLevel=P.shop; T.shopSetByAge=1; }
     await setSpellLevel(P.sp);
@@ -793,7 +796,7 @@ function setSpellLevel(lv){ return new Promise(res=>{ try{ const r=indexedDB.ope
 
 
 /* ---------- about / contact ---------- */
-const APP_VER='1.0', APP_DATE='2026-11-26', FEEDBACK='sfycnz@gmail.com';
+const APP_VER='1.1', APP_DATE='2026-11-26', FEEDBACK='sfycnz@gmail.com';
 function aboutHTML(){ const L=TC.L;
   return `<div class="about"><h3>${L('关于动物小镇','About My Little Town')}</h3>
   <div class="tag">${L('一个妈妈为女儿做的学习小镇：拼单词、认汉字、做数学、跳舞健身、写日记。','A learning town a mum made for her daughter: spelling, Chinese characters, maths, dance and fitness, and a diary.')}</div>

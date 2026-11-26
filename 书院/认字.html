@@ -48,6 +48,7 @@ h1{font-size:42px;margin:0;font-weight:900}
 .card .b small.py rt{font-size:13px;font-family:system-ui,sans-serif;color:#8a6d55}
 .word{font-family:var(--kai);font-size:54px}
 .word b{color:var(--red)}
+.wen{font-family:system-ui,sans-serif;font-size:24px;font-weight:800;color:#6b5a48;margin-top:-4px}
 .dots{display:flex;gap:8px;justify-content:center}.dots i{width:14px;height:14px;border-radius:50%;background:#EAD9C2}.dots i.ok{background:#3FBFAD}.dots i.cur{background:var(--red)}
 .mem{display:grid;grid-template-columns:repeat(4,1fr);gap:16px;width:min(760px,92vw)}
 .card{aspect-ratio:1;border-radius:22px;perspective:600px;cursor:pointer}
@@ -203,6 +204,7 @@ body::before{background:radial-gradient(ellipse at 50% 45%,rgba(255,248,234,.0) 
 <script src="books.js"></script>
 <script src="pinyin.js"></script>
 <script src="wordpics.js"></script>
+<script src="wordsen.js"></script>
 <script src="../assets/animals.js"></script>
 <script src="../town-core.js"></script>
 <script>
@@ -231,7 +233,9 @@ function learning(c,ok){ const s=st(c); s.known=false; s.seen=Math.max(1,s.seen)
 function result(c,ok){ const s=st(c), t=TC.today(); s.seen++; s.last=t;
   if(ok){ s.ok++; if(s.known){ s.due=addDays(t,90); } else { s.box=Math.min(s.box+1,MASTER); if(s.box>=MASTER) markKnown(c,'review'); else s.due=addDays(t,INTERVAL[s.box]); } }
   else { s.wrong++; s.known=false; s.box=1; s.due=addDays(t,1); } }
-const LV_EN={'一年级上':'Grade 1 · A','一年级下':'Grade 1 · B','二年级上':'Grade 2 · A','二年级下':'Grade 2 · B','三年级上':'Grade 3 · A','三年级下':'Grade 3 · B'};
+const LV_EN={'启蒙':'Starter','一年级上':'Grade 1 · A','一年级下':'Grade 1 · B','二年级上':'Grade 2 · A','二年级下':'Grade 2 · B','三年级上':'Grade 3 · A','三年级下':'Grade 3 · B'};
+const CN_NUM=['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'];
+function bookLabel(b,sp=''){ return b.st?TC.L(`启蒙${sp}${b.st}`,`Starter ${b.st}`):TC.L(sp?`第 ${b.id} 本`:`第${CN_NUM[b.id-1]||b.id}本`,`Book ${b.id}`); }
 function bookChars(b){ return [...new Set([...(b.t+b.s)].filter(isHan))]; }
 function bk(id){ return Z.books[id]||(Z.books[id]={}); }
 function passed(b){ return !!Z.books[b.id]?.passed; }
@@ -266,10 +270,10 @@ function dueChars(){ const t=TC.today(); return Object.entries(Z.chars).filter((
 /* ---------- book wall ---------- */
 function renderWall(justPassed){ $('#coins').innerHTML=TC.icon('coin')+' '+TC.fmt(T.coins); $('#knownChip').textContent=`我认识 ${knownCount()} 个字`;
   const cur=currentBook(), done=BOOKS.filter(passed).length;
-  $('#wallSub').textContent= cur?`已读通 ${done} / ${BOOKS.length} 本 · 现在读第 ${cur.id} 本《${cur.t}》`:`${BOOKS.length} 本全部读通啦！新书很快就到～`;
+  $('#wallSub').textContent= cur?TC.L(`已读通 ${done} / ${BOOKS.length} 本 · 现在读${bookLabel(cur,' ')}《${cur.t}》`,`Finished ${done} / ${BOOKS.length} books · now reading ${bookLabel(cur)} 《${cur.t}》`):`${BOOKS.length} 本全部读通啦！新书很快就到～`;
   $('#wall').innerHTML=BOOKS.map(b=>{ const p=passed(b), u=unlocked(b), c=b===cur;
     return `<div class="cover ${p?'passed':''} ${u?'':'locked'} ${c?'current':''} ${justPassed===b.id?'colorize':''}" data-id="${b.id}">
-      <img src="${IMG(b)}" alt="" onerror="this.style.display='none'"><span class="no">${TC.L(`第${['一','二','三','四','五','六','七','八','九','十','十一','十二','十三','十四','十五','十六','十七','十八','十九','二十'][b.id-1]||b.id}本`,`Book ${b.id}`)}</span><span class="lv">${TC.L(b.lv,LV_EN[b.lv]||b.lv)}</span>
+      <img src="${IMG(b)}" alt="" onerror="this.style.display='none'"><span class="no">${bookLabel(b)}</span><span class="lv">${TC.L(b.lv,LV_EN[b.lv]||b.lv)}</span>
       ${u?'':'<div class="lock">'+TC.icon('lock','big')+'</div>'}<div class="label">${esc(b.t)}</div>${p?'<div class="star">'+TC.icon('star','big')+'</div>':''}</div>`; }).join('');
   $$('.cover').forEach(el=>el.onclick=()=>{ const b=BOOKS.find(x=>x.id===+el.dataset.id); if(!unlocked(b)){ panda('先把前面那本书读通，这本才会打开哦！',true); return; } openBook(b); });
   const due=dueChars().length; $('#reviewBtn').style.display=due?'':'none'; $('#reviewBtn').textContent=`复习 ${Math.min(due,MAX_REVIEW)} 个字`;
@@ -303,7 +307,7 @@ function listenChoose(c,{label='听一听，是哪个字？',allowRetry=true,poo
 function intro(c,b){ return new Promise(res=>{ const x=info(c); $('#stepName').textContent='学新字';
   const w=esc(x.w).replace(c,`<b>${c}</b>`), sen=esc(sentenceOf(b,c)).split(c).join(`<b>${c}</b>`);
   const pic=wpic(x.w);
-  $('#stage').innerHTML=`<div class="introcard"><div class="ch">${c}</div><div class="center" style="gap:10px">${pic?`<img class="wpic" src="${pic}" alt="">`:''}<div class="word py">${pyRuby(x.w,c)}</div></div></div>
+  $('#stage').innerHTML=`<div class="introcard"><div class="ch">${c}</div><div class="center" style="gap:10px">${pic?`<img class="wpic" src="${pic}" alt="">`:''}<div class="word py">${pyRuby(x.w,c)}</div>${TC.lang()==='en'&&(window.WORD_EN||{})[x.w]?`<div class="wen">${esc(WORD_EN[x.w])}</div>`:''}</div></div>
    <div class="ctx">${sen}</div>
    <div style="display:flex;gap:14px"><button class="big white" id="again">再听一次</button><button class="big red" id="gotIt">我记住了 →</button></div>`;
   setTimeout(()=>sayChar(c),300); $('#again').onclick=()=>sayChar(c); $('#gotIt').onclick=()=>res(); }); }
@@ -356,7 +360,7 @@ async function passBook(b,ok,n){ const B=bk(b.id), first=!B.passed; if(first) B.
   $('#stage').innerHTML=`<img class="result-cover ${first?'gray':''}" id="rc" src="${IMG(b)}" alt=""><h1>《${esc(b.t)}》读通啦！</h1>
    <div style="font-size:20px">测试答对 ${ok}/${n}${learnt?` · 学会了 <span class="hanzi" style="color:var(--red);font-size:30px">${(B.marked||[]).join('')}</span>`:''}</div>
    <div class="chip" style="font-size:22px">${TC.icon('coin')} +${TC.fmt(cents)}　·　我认识 ${knownCount()} 个字</div>
-   ${first&&next?`<div style="font-size:22px;font-weight:900;color:#2E8B74">新书打开了：第 ${next.id} 本《${esc(next.t)}》</div>`:''}
+   ${first&&next?`<div style="font-size:22px;font-weight:900;color:#2E8B74">${TC.L('新书打开了：'+bookLabel(next,' '),'New book unlocked: '+bookLabel(next))}《${esc(next.t)}》</div>`:''}
    ${r.allDoneNow?`<div style="font-size:20px;font-weight:900;color:#E2683F">今天的任务全部完成！奖励 ${TC.fmt(r.bonus)} + 1 个印章</div>`:''}
    <div style="display:flex;gap:14px"><button class="big red" id="toWall">回书墙</button><button class="big white" id="toTown2"><img class="tci" src="../assets/icons/home.png" alt=""> 回小镇</button></div>`;
   if(first) setTimeout(()=>$('#rc')?.classList.add('go'),400);
@@ -390,11 +394,11 @@ function openParent(){ go('parent'); const k=knownCount(); const lrn=Object.entr
   <div class="pc"><h3>识字量：认识 ${k} 个 · 学习中 ${lrn.length} 个</h3><div class="muted" style="font-size:14px">"认识"＝在书里没勾、测试一次答对；勾过的字要在间隔复习（1→3→7→14→30 天）里一直答对才算认识。</div></div>
   <div class="pc"><h3>书墙进度</h3><table style="width:100%;border-collapse:collapse;font-size:15px">
    <tr style="text-align:left;color:#8C7766"><th>书</th><th>程度</th><th>读通日期</th><th>第一次测试</th><th>勾的生字</th><th>读过</th><th></th></tr>
-   ${BOOKS.map(b=>{ const B=Z.books[b.id]||{}; return `<tr style="border-top:1px solid #EEE"><td>第${b.id}本《${esc(b.t)}》</td><td>${b.lv}</td><td>${B.passed||'—'}</td><td>${B.firstScore||'—'}</td><td class="hanzi" style="font-size:20px">${(B.marked||[]).join('')||'—'}</td><td>${B.readTimes||0} 次</td><td>${B.passed?`<button class="btn ghost" data-reset="${b.id}">重置</button>`:''}</td></tr>`; }).join('')}</table></div>
+   ${BOOKS.map(b=>{ const B=Z.books[b.id]||{}; return `<tr style="border-top:1px solid #EEE"><td>${bookLabel(b)}《${esc(b.t)}》</td><td>${b.lv}</td><td>${B.passed==='skip'?'跳过':(B.passed||'—')}</td><td>${B.firstScore||'—'}</td><td class="hanzi" style="font-size:20px">${(B.marked||[]).join('')||'—'}</td><td>${B.readTimes||0} 次</td><td>${B.passed?`<button class="btn ghost" data-reset="${b.id}">重置</button>`:''}</td></tr>`; }).join('')}</table></div>
   <div class="pc"><h3>用妈妈的声音读故事（可选）</h3><div style="font-size:15px;line-height:1.7">电脑的中文语音读单个字有时不准。妈妈可以用手机录音，把文件放进 <b>动物小镇/书院/录音/</b>：<br>
    · 整本故事：<code>第1本.m4a</code>、<code>第2本.m4a</code>…（mp3 也行）→ 点「听故事」时先播妈妈的录音<br>
    · 单个字（可选）：放进 <code>录音/字/</code>，文件名就是这个字，比如 <code>球.m4a</code> → 学字和测试时都用妈妈的声音<br>没有录音的地方，自动用电脑语音。</div>
-   <div style="margin-top:8px">故事原文（录音时照着读）：${BOOKS.map(b=>`<details><summary>第${b.id}本《${esc(b.t)}》</summary><div class="hanzi" style="font-size:20px;line-height:1.8">${esc(b.s)}</div></details>`).join('')}</div></div>
+   <div style="margin-top:8px">故事原文（录音时照着读）：${BOOKS.map(b=>`<details><summary>${bookLabel(b)}《${esc(b.t)}》（录音文件名：第${b.id}本）</summary><div class="hanzi" style="font-size:20px;line-height:1.8">${esc(b.s)}</div></details>`).join('')}</div></div>
   <div class="pc"><h3>书里的字（点一下切换：绿 = 认识，黄 = 学习中，灰 = 还没学）</h3><div class="cgrid" id="cg">${all.map(c=>{ const s=Z.chars[c]; const cls=s?.known?'k':(s?.seen?'l':''); return `<span class="${cls}" data-c="${c}">${c}</span>`; }).join('')}</div></div>`;
   $$('#cg span').forEach(sp=>sp.onclick=()=>{ const c=sp.dataset.c, s=st(c); if(s.known){ s.known=false; s.box=0; s.seen=0; s.due=null; sp.className=''; } else { markKnown(c,'parent'); sp.className='k'; } TC.save(); });
   $$('[data-reset]').forEach(x=>x.onclick=()=>{ const id=+x.dataset.reset; if(!confirm('把这本书和后面的书都重新锁上？（认识的字不会丢）')) return; BOOKS.filter(b=>b.id>=id).forEach(b=>delete Z.books[b.id]); TC.save(); openParent(); }); }
@@ -414,6 +418,7 @@ const _go=go; go=function(id){ _go(id); placeScrolls(); $('#panda').style.displa
 /* ---------- boot ---------- */
 (async()=>{ T=await TC.ready; T.zh=T.zh||{}; Z=T.zh;
   ['chars','read','books'].forEach(k=>Z[k]=Z[k]||{}); ['lessons','queue','extra','storiesSeenOpen'].forEach(k=>Z[k]=Z[k]||[]);
+  { const starters=BOOKS.filter(b=>b.st); if(starters.some(b=>!passed(b)) && (T.zhStart==='book1' || BOOKS.some(b=>!b.st&&passed(b)))){ starters.forEach(b=>{ if(!passed(b)) bk(b.id).passed='skip'; }); TC.save(); } }
   TC.startTimer(); go('home');
   if(location.hash==='#parent'){ history.replaceState(null,'',location.pathname); if(await TC.parentPass()){ openParent(); return; } }
   if(TC.guard()) return;
