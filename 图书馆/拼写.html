@@ -93,6 +93,8 @@ h2{font-size:28px;margin:0;font-weight:900}
 .ov .card{max-width:640px;width:100%;text-align:center}
 .fixword{font-size:72px;font-weight:900;letter-spacing:6px;color:var(--ink);font-family:"Comic Sans MS","Chalkboard SE","Marker Felt",var(--font);min-height:90px}
 .fixword span{display:inline-block;opacity:0;transform:scale(.3) translateY(20px)}
+.teachword .tk1{color:#E2664A}.teachword .tk2{color:#2E8BC0}.teachword .tk3{color:#9B5DE5}.teachword .tk4{color:#2EA493}.teachword .tk{text-decoration:underline;text-decoration-thickness:4px;text-underline-offset:10px}
+.teachTip{background:#FFF3D6;border-radius:14px;padding:10px 16px;font-size:19px;max-width:620px;text-align:center}.teachSteps{display:flex;gap:10px;flex-wrap:wrap;justify-content:center}.teachSteps span{background:#EAF6F2;border-radius:999px;padding:8px 14px;font-weight:800;font-size:16px}
 .fixword span.in{opacity:1;transform:none;transition:all .35s cubic-bezier(.3,1.6,.5,1)}
 #zoomov{background:rgba(0,0,0,.85);padding:0}
 #zoomov .scroller{position:absolute;inset:0;overflow:auto;-webkit-overflow-scrolling:touch}
@@ -276,6 +278,14 @@ html,body{background:#E8D9BF url(../assets/library_bg.jpg) center/cover no-repea
 </section>
 
 <!-- overlays -->
+<div class="ov" id="teachov"><div class="card col center" style="gap:14px;max-width:760px">
+  <div style="font-size:22px;font-weight:900;color:#D96A4C">This one is tricky. Let's learn it!</div>
+  <div class="fixword teachword" id="teachWord"></div>
+  <div class="teachTip" id="teachTip"></div>
+  <div class="teachSteps"><span>Look</span><span>Say the letters</span><span>Copy it 3 times on scrap paper, then cover it</span></div>
+  <div class="muted" style="font-size:16px">You will write it again from memory at the end of this set.</div>
+  <div class="row center"><button class="big white" id="teachSpell" style="font-size:18px;padding:12px 22px">Spell it again</button><button class="big teal" id="teachDone">I copied it 3 times</button></div>
+</div></div>
 <div class="ov" id="fixov"><div class="card col center" style="gap:16px">
   <div style="font-size:22px;font-weight:800">Let's fix it together!</div>
   <div class="fixword" id="fixword"></div>
@@ -365,7 +375,8 @@ function pickGroup(){
   const doneToday = new Set(S.sessions.filter(s=>s.date===t).flatMap(s=>s.items.map(i=>i.id)));
   const all = Object.values(S.words).filter(W=>!doneToday.has(W.id));
   const due = all.filter(W=>W.seen>0 && W.due && W.due<=t).sort((a,b)=>a.due<b.due?-1:a.due>b.due?1:(b.wrong-a.wrong));
-  const g = due.slice(0,n);
+  const hard=due.filter(isHard), easy=due.filter(W=>!isHard(W));
+  const g = hard.slice(0,2).concat(easy).slice(0,n);
   if(g.length<n){
     const src=S.settings.sources;
     const book = all.filter(W=>isNew(W) && W.tags.includes('BOOK') && src.BOOK).sort((a,b)=>a.added-b.added);
@@ -450,10 +461,41 @@ $('#startBtn').onclick=()=>{ if(!S.current && TC.guard()) return; if(!S.current)
 $('#toZoo').onclick=()=>go('zoo');
 $('#backTown').onclick=()=>{ location.href='../小镇.html'; };
 
+/* ================= TEACH (words she keeps getting wrong) ================= */
+const TIPS={because:'Big Elephants Can Always Understand Small Elephants',said:'Sally Anne Is Dancing',friend:'A friEND is there till the END',people:'People Eat Orange Peel Like Elephants',
+ could:'O U Lucky Duck',would:'O U Lucky Duck',should:'O U Lucky Duck',they:'The Hairy Elephant Yells',does:'Does Oliver Eat Snails?',what:'What is in the HAT? w + hat',
+ there:'HERE is hiding in tHERE',where:'HERE is hiding in wHERE',here:'I am HERE',were:'We were HERE? No: w-e-r-e',island:'An island IS LAND',believe:'Never beLIEve a LIE',piece:'A PIEce of PIE',
+ know:'K is shy and silent: k-now',knew:'K is shy and silent: k-new',write:'W is silent: w-rite',wrong:'W is silent: w-rong',two:'TWO has a W like TWIns',
+ beautiful:'Big Elephants Are Ugly',necessary:'one Collar, two Sleeves',rhythm:'Rhythm Helps Your Two Hips Move',
+ Wednesday:'Say it funny: WED-NES-DAY',February:'Say it funny: FEB-RU-ARY',school:'s-c-h: SCHool Children Have fun',
+ any:'A New Yo-yo',many:'MAN + Y',once:'ON + CE',again:'A GAIN',friends:'A friEND is there till the END',
+ laugh:'Laugh And U Get Happy',enough:'E-NOUGH: Old Uncle Goes Home',caught:'Cats Are Usually Good Hunters',
+ their:'THEIR has I in it: I own it',buy:'Buy Ur Yoghurt',busy:'BUS + Y',eye:'Two eyes and a nose: e-y-e',
+ sure:'S-U-R-E: Sure U R Excellent',quiet:'qui-ET: be quiet and Eat Tea',different:'DIFFERent: there are two Fs',
+ little:'little has two Ts',happy:'happy has two Ps',really:'REAL + LY',until:'until has ONE L',always:'ALways: ALL ways with one L'};
+function trickyHTML(w){ // colour common tricky spelling patterns
+  const pats=[/(ough|augh|eigh|igh|tch|dge|tion|sion|ture|ph|wh|ck|qu|kn|wr|gn|mb)/gi,/([b-df-hj-np-tv-z])\1/gi,/(ai|ay|ee|ea|ie|ei|oa|oo|ou|ow|au|aw|ew|ue|oi|oy|ar|er|ir|or|ur)/gi];
+  const mark=Array(w.length).fill(0); pats.forEach((re,k)=>{ let m; re.lastIndex=0; while((m=re.exec(w))){ for(let i=m.index;i<m.index+m[0].length;i++) if(!mark[i]) mark[i]=k+1; } });
+  if(/[aeiou][^aeiou]e$/i.test(w)&&!mark[w.length-1]) mark[w.length-1]=4;
+  return [...w].map((ch,i)=>`<span class="${mark[i]?'tk tk'+mark[i]:''}">${esc(ch)}</span>`).join(''); }
+function isHard(W){ return W && W.wrong>=2 && !W.mastered && W.lastWrong && W.lastWrong===W.lastSeen; }
+async function teachWord(W){ return new Promise(async res=>{ const ov=$('#teachov'); $('#teachWord').innerHTML=trickyHTML(W.w);
+  const tip=W.tip||TIPS[W.w]||TIPS[W.w.toLowerCase()];
+  $('#teachTip').innerHTML=tip?`<b>Memory trick:</b> ${esc(tip)}`:`<b>Make a memory trick!</b> Ask Mum or Dad to make up a funny sentence for this word.`;
+  $('#teachDone').style.visibility='hidden'; ov.classList.add('on');
+  const spans=[...$('#teachWord').children]; spans.forEach(s=>s.classList.remove('in'));
+  await sleep(300); await playWordAudio(W); for(const s of spans){ await sleep(260); s.classList.add('in'); }
+  await sleep(300); await utter([...W.w].join(', '),0.7); await sleep(250); await playWordAudio(W);
+  if(tip){ await sleep(300); await utter(tip,0.85); }
+  $('#teachDone').style.visibility='visible';
+  $('#teachSpell').onclick=()=>utter([...W.w].join(', '),0.7);
+  $('#teachDone').onclick=()=>{ ov.classList.remove('on'); res(); }; }); }
+
 /* ================= PRACTICE ================= */
 function curWord(){ return S.words[S.current.ids[S.current.i]]; }
 function startPractice(){ S.current.stage='write'; save(); go('practice'); showWord(); }
-function showWord(){ const c=S.current, W=curWord();
+async function showWord(){ const c=S.current, W=curWord(); c.taught=c.taught||{};
+  if(isHard(W)&&!c.taught[W.id]){ c.taught[W.id]=true; await teachWord(W); if(c.i<c.ids.length-1){ c.ids.splice(c.i,1); c.ids.push(W.id); } save(); return showWord(); }
   $('#prog').innerHTML=c.ids.map((_,k)=>`<i class="${k<c.i?'done':k===c.i?'cur':''}"></i>`).join('');
   $('#pnum').textContent=c.i+1; const sent=$('#psent'); sent.style.visibility='hidden';
   const re=new RegExp('\\b'+W.w.replace(/[.*+?^${}()|[\]\\]/g,'\\$&')+'\\b','i');
@@ -600,13 +642,14 @@ function pOverview(){ const s=stats(); const tw=troubleWords(15);
   ${backupAge===null||backupAge>7?`<div class="pcard" style="background:#FFF4D6"><b>${backupAge===null?'还没有备份过':'已经 '+backupAge+' 天没备份了'}</b>：数据只存在这台电脑上，建议每周备份一次到云端硬盘。<button class="btn" style="margin-left:8px" onclick="ptab='report';renderParent()">去备份</button></div>`:''}
   <div class="stat"><div>已掌握<b>${s.m}</b></div><div>学习中<b>${s.l}</b></div><div>未开始<b>${s.n}</b></div><div>今天待复习<b>${s.due}</b></div><div>练习天数<b>${s.days}</b></div><div>完成组数<b>${s.groups}</b></div></div>
   <div class="pcard"><h3>最近 4 周练习</h3>${calHTML(28)}<div class="muted" style="margin-top:8px;font-size:14px">颜色越深 = 当天组数越多</div></div>
-  <div class="pcard"><h3>易错词 Top 15</h3>${tw.length?`<table><tr><th>单词</th><th>错/对</th><th>状态</th><th>最近错</th><th></th></tr>${tw.map(W=>`<tr><td><b>${esc(W.w)}</b></td><td>${W.wrong} / ${W.ok}</td><td>${pill(W)}</td><td>${W.lastWrong||''}</td><td><button class="btn ghost" data-wd="${esc(W.id)}">详情</button></td></tr>`).join('')}</table>`:'<div class="muted">还没有错词</div>'}</div>`; }
+  <div class="pcard"><h3>易错词 Top 15</h3>${tw.length?`<table><tr><th>单词</th><th>错/对</th><th>状态</th><th>最近错</th><th></th></tr>${tw.map(W=>`<tr><td><b>${esc(W.w)}</b></td><td>${W.wrong} / ${W.ok}</td><td>${pill(W)}</td><td>${W.lastWrong||''}</td><td>${isHard(W)?'<span class="pill" style="background:#FFE0D6">需要教</span> ':''}${W.tip||TIPS[W.w]?'💡':''}<button class="btn ghost" data-wd="${esc(W.id)}">详情</button></td></tr>`).join('')}</table>`:'<div class="muted">还没有错词</div>'}</div>`; }
 function pill(W){ const st=status(W); return `<span class="pill ${st}">${st==='m'?'已掌握':st==='n'?'未开始':'第 '+W.box+'/5 档'}</span>`; }
 document.addEventListener('click',e=>{ const b=e.target.closest('[data-wd]'); if(b) wordDetail(b.dataset.wd); });
 async function wordDetail(id){ const W=S.words[id]; const hist=S.sessions.filter(s=>s.items.some(i=>i.id===id)).map(s=>{ const it=s.items.find(i=>i.id===id); return `${s.date} ${it.ok?'✓':'✗'}`; });
   let imgs=''; for(const p of W.wrongPhotos||[]){ const b=await DB.get('photos',p).catch(()=>null); if(b) imgs+=`<img src="${URL.createObjectURL(b)}">`; }
-  const r = await msg(`<b style="font-size:26px">${esc(W.w)}</b> ${pill(W)}<br><span class="muted">${esc(W.s)}</span><br>来源：${W.tags.map(t=>SRC_LABEL[t]||t).join('、')}${W.book?'（'+esc(W.book)+'）':''}<br>下次复习：${W.due||'—'}<br>记录：${hist.join('，')||'—'}${imgs?`<div style="margin-top:8px">写错时的照片：</div><div class="thumbs">${imgs}</div>`:''}`,
-    [{t:'录我的发音',cls:'ghost'},{t:'标为已掌握',cls:'ghost'},{t:'重置为未开始',cls:'ghost'},{t:'关闭'}]);
+  const r = await msg(`<b style="font-size:26px">${esc(W.w)}</b> ${pill(W)}<br><span class="muted">${esc(W.s)}</span><br>来源：${W.tags.map(t=>SRC_LABEL[t]||t).join('、')}${W.book?'（'+esc(W.book)+'）':''}<br>记忆口诀：${esc(W.tip||TIPS[W.w]||'（还没有）')}<br>下次复习：${W.due||'—'}<br>记录：${hist.join('，')||'—'}${imgs?`<div style="margin-top:8px">写错时的照片：</div><div class="thumbs">${imgs}</div>`:''}`,
+    [{t:'录我的发音',cls:'ghost'},{t:'标为已掌握',cls:'ghost'},{t:'重置为未开始',cls:'ghost'},{t:'编口诀',cls:'ghost'},{t:'关闭'}]);
+  if(r===3){ const v=prompt('给「'+W.w+'」写一个记忆口诀（英文或中文都行），留空就用默认的：',W.tip||TIPS[W.w]||''); if(v!==null){ W.tip=v.trim(); save(); renderParent(); } }
   if(r===0) recordAudio(W); if(r===1){ W.masteredManually=true; W.mastered=true; W.box=MASTER_BOX; W.masteredOn=today(); W.due=addDays(today(),MAINTAIN); save(); renderParent(); }
   if(r===2){ Object.assign(W,{box:0,due:null,mastered:false,seen:0,ok:0,wrong:0}); save(); renderParent(); } }
 async function recordAudio(W){ if(!navigator.mediaDevices||!window.MediaRecorder){ msg('这个设备不支持录音'); return; }
@@ -654,7 +697,7 @@ function drawWords(){ let ws=Object.values(S.words);
   if($('#bulkM')) $('#bulkM').onclick=async()=>{ const xs=Object.values(S.words).filter(W=>W.tags.includes(wf.src)&&W.seen===0&&!W.mastered);
     if(await msg(`把 ${xs.length} 个词标为已掌握？之后它们会在 60 天后抽查一次。`,[{t:'确定'},{t:'取消',cls:'ghost'}])===0){ xs.forEach(W=>{W.masteredManually=true;W.mastered=true;W.box=MASTER_BOX;W.masteredOn=today();W.due=addDays(today(),MAINTAIN);W.seen=0;}); save(); drawWords(); } };
   if($('#bulkOff')) $('#bulkOff').onclick=()=>{ S.settings.sources[wf.src]=!S.settings.sources[wf.src]; save(); drawWords(); };
-  $('#wtable').innerHTML=`<table><tr><th>单词</th><th>状态</th><th>错/对</th><th>下次</th><th></th></tr>${ws.slice(0,400).map(W=>`<tr><td><b>${esc(W.w)}</b> <span class="muted" style="font-size:12px">${W.tags.map(t=>SRC_LABEL[t]||t).join(' ')}</span></td><td>${pill(W)}</td><td>${W.wrong}/${W.ok}</td><td>${W.due||''}</td><td><button class="btn ghost" data-wd="${esc(W.id)}">详情</button></td></tr>`).join('')}</table>${ws.length>400?'<div class="muted">只显示前 400 个，用搜索缩小范围</div>':''}`; }
+  $('#wtable').innerHTML=`<table><tr><th>单词</th><th>状态</th><th>错/对</th><th>下次</th><th></th></tr>${ws.slice(0,400).map(W=>`<tr><td><b>${esc(W.w)}</b> <span class="muted" style="font-size:12px">${W.tags.map(t=>SRC_LABEL[t]||t).join(' ')}</span></td><td>${pill(W)}</td><td>${W.wrong}/${W.ok}</td><td>${W.due||''}</td><td>${isHard(W)?'<span class="pill" style="background:#FFE0D6">需要教</span> ':''}${W.tip||TIPS[W.w]?'💡':''}<button class="btn ghost" data-wd="${esc(W.id)}">详情</button></td></tr>`).join('')}</table>${ws.length>400?'<div class="muted">只显示前 400 个，用搜索缩小范围</div>':''}`; }
 function pReport(){ $('#p-report').innerHTML=`
   <div class="pcard"><h3>学习报告 PDF</h3><div class="muted" style="font-size:14px;margin-bottom:10px">包含：已掌握词、易错词、学习中的词、练习日历。点按钮后，在打印窗口的「目标打印机」选「另存为 PDF」，保存即可（可以直接存到「我的云端硬盘」）。</div>
     <button class="btn" id="pdfBtn">生成报告</button></div>

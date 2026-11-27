@@ -335,10 +335,14 @@ function testSet(b,m,all){ const rest=shuffle(bookChars(b).filter(c=>!m.includes
   const fresh=rest.filter(c=>!isKnown(c)), old=rest.filter(c=>isKnown(c));
   const extra=(all?10:Math.max(4,Math.min(6,16-m.length)));
   return shuffle(m.concat(fresh.concat(old).slice(0,extra))); }
-async function startTest(b,m,all){ go('play'); const set=testSet(b,m,all); const wrong=[]; $('#stepName').textContent='小测试';
+async function startTest(b,m,all){ go('play'); const set0=testSet(b,m,all); const rev=dueChars().filter(c=>!set0.includes(c)).slice(0,3); const set=shuffle(set0.concat(rev)); const wrong=[]; $('#stepName').textContent='小测试';
   await flash(all?'好！直接来测试':'学完啦，来做小测试');
   for(let i=0;i<set.length;i++){ setDots(set.length,i); const c=set[i]; const ok=await listenChoose(c,{label:`小测试（${i+1}/${set.length}）：听一听，找出来`,allowRetry:false,pool:bookChars(b)});
     if(!ok) wrong.push(c); }
+  // old characters that were due for review: update their memory, but they don't decide whether this book passes
+  const revWrong=rev.filter(c=>wrong.includes(c)); rev.forEach(c=>result(c,!revWrong.includes(c)));
+  rev.forEach(c=>{ const k=wrong.indexOf(c); if(k>=0) wrong.splice(k,1); const j=set.indexOf(c); if(j>=0) set.splice(j,1); });
+  if(rev.length){ if(revWrong.length){ await flash(TC.L(`复习的旧字「${revWrong.join('')}」还要再记一记`,`Let's practise these old characters again: ${revWrong.join(' ')}`)); for(const c of revWrong) await intro(c,BOOKS.find(x=>bookChars(x).includes(c))||b); } else await flash(TC.L(`复习的 ${rev.length} 个旧字全对！`,`All ${rev.length} review characters right!`)); }
   const allowed=set.length<=10?1:2, B=bk(b.id); B.lastScore=`${set.length-wrong.length}/${set.length}`; if(B.firstScore===undefined) B.firstScore=B.lastScore;
   // update character states
   set.forEach(c=>{ if(wrong.includes(c)) result(c,false); else if(m.includes(c)) { /* learning, keep SRS */ } else if(!isKnown(c)) markKnown(c,'book'); });
