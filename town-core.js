@@ -203,7 +203,7 @@ function css(){ if(document.getElementById('town-core-css')) return; const s=doc
 @keyframes tcdrop{from{transform:translate(-50%,-80px)}}
 #town-night{position:fixed;inset:0;z-index:9999;background:#0d1433 center/cover no-repeat;display:flex;align-items:center;justify-content:center;font-family:ui-rounded,system-ui,"PingFang SC";animation:tcfade 1.6s ease}
 @keyframes tcfade{from{opacity:0}}
-#town-night .box{background:rgba(16,20,60,.72);backdrop-filter:blur(4px);border-radius:32px;padding:28px 40px;display:flex;align-items:center;gap:24px;color:#FFF6D8;max-width:900px;box-shadow:0 0 60px rgba(255,220,140,.18)}
+#town-night .tn-box{background:rgba(16,20,60,.72);backdrop-filter:blur(4px);border-radius:32px;padding:28px 40px;display:flex;align-items:center;gap:24px;color:#FFF6D8;max-width:900px;box-shadow:0 0 60px rgba(255,220,140,.18)}
 #town-night img.r{height:min(52vh,420px);filter:drop-shadow(0 6px 12px rgba(0,0,0,.4))}
 #town-night h1{font-size:44px;margin:0 0 10px;font-weight:900;letter-spacing:2px}
 #town-night p{font-size:22px;margin:6px 0;line-height:1.5}
@@ -221,7 +221,7 @@ function animalStyle(i){ const A=(window.ANIMALS||[])[i]; if(!A) return ''; cons
 function showNight(){ css(); if(document.getElementById('town-night')) return; speechSynthesis && speechSynthesis.cancel();
   const n=document.createElement('div'); n.id='town-night'; n.style.backgroundImage=`url(${ROOT}/assets/map_night.jpg)`;
   const pets=T.animals.slice(-5).map(i=>`<div style="${animalStyle(i)}"></div>`).join('');
-  n.innerHTML=`<div class="box"><img class="r" src="${ROOT}/assets/outfits/pyjamas.webp" alt=""><div>
+  n.innerHTML=`<div class="tn-box"><img class="r" src="${ROOT}/assets/outfits/pyjamas.webp" alt=""><div>
     <h1>晚安，${T.childName||TC.L('小朋友','friend')}！</h1><p>夜深了，小镇的动物们都睡了。</p><p>拜拜，明天再见！</p>
     <p style="font-size:17px;opacity:.75">Good night! See you tomorrow.</p><div class="zz">${pets}</div>${diaryBtn()}</div></div>
     <button class="parent">家长中心</button>`;
